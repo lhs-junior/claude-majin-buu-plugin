@@ -1,0 +1,51 @@
+# Source files
+src/
+tests/
+*.ts
+!*.d.ts
+
+# Config files
+tsconfig.json
+tsup.config.ts
+.eslintrc.json
+.prettierrc
+
+# Development
+node_modules/
+.vscode/
+.idea/
+*.swp
+
+# CI/CD
+.github/
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+!LICENSE
+
+# Test & Coverage
+coverage/
+.nyc_output/
+*.test.ts
+*.spec.ts
+
+# Local config
+.env
+.env.local
+config/servers/*.json
+!config/servers/.gitkeep
+
+# Database
+*.db
+*.db-journal
+
+# Build artifacts
+*.tsbuildinfo
+.cache/
+
+# Plan files
+.claude/
