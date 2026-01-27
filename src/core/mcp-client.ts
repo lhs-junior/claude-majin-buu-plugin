@@ -139,7 +139,7 @@ export class MCPClient {
 
       // Check if MCP returned an error
       if (response.isError) {
-        const errorText = response.content?.[0]?.text || 'Unknown error';
+        const errorText = (response.content as any)?.[0]?.text || 'Unknown error';
         throw new Error(errorText);
       }
 

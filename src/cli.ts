@@ -95,10 +95,16 @@ program
         return;
       }
 
-      console.log(`✅ Found ${evaluated.length} recommended MCP servers:\n`);
+      // Map to include scores
+      const reposWithScores = evaluated.map(repo => ({
+        repo,
+        score: evaluator.evaluate(repo)
+      }));
+
+      console.log(`✅ Found ${reposWithScores.length} recommended MCP servers:\n`);
 
       // Display results
-      evaluated.forEach((item, index) => {
+      reposWithScores.forEach((item, index) => {
         const { repo, score } = item;
         console.log(`${index + 1}. ${repo.fullName}`);
         console.log(`   Score: ${score.total}/100 (${score.grade}) - ${score.recommendation}`);
@@ -115,7 +121,7 @@ program
       // Ask user which ones to install
       if (options.autoInstall) {
         console.log('🚀 Auto-installing all recommended plugins...\n');
-        for (const item of evaluated) {
+        for (const item of reposWithScores) {
           await installer.installFromGitHub(item.repo);
         }
       } else {
@@ -135,17 +141,17 @@ program
           return;
         }
 
-        let toInstall: typeof evaluated = [];
+        let toInstall: typeof reposWithScores = [];
 
         if (answer.trim().toLowerCase() === 'all') {
-          toInstall = evaluated;
+          toInstall = reposWithScores;
         } else {
           const indices = answer
             .split(',')
             .map((n) => parseInt(n.trim()) - 1)
-            .filter((i) => i >= 0 && i < evaluated.length);
+            .filter((i) => i >= 0 && i < reposWithScores.length);
 
-          toInstall = indices.map((i) => evaluated[i]).filter((item) => item !== undefined);
+          toInstall = indices.map((i) => reposWithScores[i]).filter((item) => item !== undefined);
         }
 
         if (toInstall.length === 0) {
