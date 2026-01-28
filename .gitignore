@@ -48,3 +48,11 @@ temp/
 # Config (user-specific)
 config/servers/*.json
 !config/servers/.gitkeep
+
+# Claude Code local settings
+.claude/*.local.*
+.claude/settings.local.json
+
+# oh-my-claudecode plugin internal files
+.omc/
+
