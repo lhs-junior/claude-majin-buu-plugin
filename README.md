@@ -154,48 +154,74 @@ The awesome-plugin combines **7 major feature systems** providing a comprehensiv
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│      Claude Desktop / Claude Code       │
-└─────────────────┬───────────────────────┘
-                  │ MCP Protocol
-┌─────────────────┴───────────────────────┐
-│    Awesome MCP Meta Plugin (Gateway)    │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │ Tool Search & Selection Engine  │   │
-│  │ - BM25 Indexer (<1ms)           │   │
-│  │ - Intent Classifier             │   │
-│  │ - Dynamic Loader (3-Layer)      │   │
-│  │ - Usage Learning                │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │ Plugin Discovery & Registry     │   │
-│  │ - GitHub Explorer               │   │
-│  │ - Quality Evaluator (0-100)     │   │
-│  │ - Plugin Metadata (SQLite)      │   │
-│  │ - Auto-installer                │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │ MCP Gateway / Proxy Layer       │   │
-│  │ - Multi-server Connections      │   │
-│  │ - Tool Call Proxying            │   │
-│  │ - Session Manager               │   │
-│  └─────────────────────────────────┘   │
-└────┬────────┬────────┬─────────────────┘
-     │        │        │
-  [MCP1]  [MCP2]  [MCP3...N]
+┌──────────────────────────────────────────┐
+│     Claude Desktop / Claude Code         │
+└────────────────┬─────────────────────────┘
+                 │ MCP Protocol
+┌────────────────┴─────────────────────────┐
+│  Awesome Plugin Gateway (298 lines)      │
+│  Orchestration & Public API              │
+└────────────────┬─────────────────────────┘
+                 │
+    ┌────────────┼────────────┐
+    │            │            │
+┌───▼────┐  ┌───▼────┐  ┌───▼──────┐
+│Feature │  │  Tool  │  │   MCP    │
+│Coordi- │  │ Search │  │ Server   │
+│nator   │  │ Engine │  │ Manager  │
+└───┬────┘  └───┬────┘  └───┬──────┘
+    │           │            │
+┌───▼──────────┐│       ┌───▼──────┐
+│6 Internal    ││       │ External │
+│Features:     ││       │ MCP      │
+│- Memory      ││       │ Servers  │
+│- Agents      ││       │          │
+│- Planning    ││       │          │
+│- TDD         ││       │          │
+│- Guide       ││       │          │
+│- Science     ││       │          │
+└──────────────┘│       └──────────┘
+                │
+         ┌──────▼──────┐
+         │  Tool Loader│
+         │  & BM25     │
+         └─────────────┘
 ```
+
+### Architecture Design (v2.0.0 Refactoring)
+
+The v2.0.0 release introduced a clean 4-layer architecture that eliminates complexity and circular dependencies:
+
+**Layer 1: Gateway Orchestration (298 lines)**
+The core gateway is now 63% smaller (reduced from 800 lines) while handling all routing, session management, and protocol conversion between Claude and MCP servers.
+
+**Layer 2: Three Specialized Managers**
+
+- **FeatureCoordinator**: Manages all 6 internal features (Memory, Agents, Planning, TDD, Guide, Science) with unified state management
+- **MCPServerManager**: Handles external MCP server connections, tool registration, and connection lifecycle
+- **ToolSearchEngine**: Provides BM25-powered intelligent tool discovery and selection with <1ms performance
+
+**Layer 3: Feature Implementation**
+Internal features implement specialized functionality while maintaining clean boundaries. Each feature provides well-defined tool interfaces.
+
+**Layer 4: Tool Loading & Search**
+The BM25-indexed tool loader enables intelligent tool selection, usage learning, and semantic search across all available tools.
+
+**Key Improvements**:
+
+- Zero circular dependencies through clear separation of concerns
+- Each component has a single responsibility
+- Easy to test, maintain, and extend
+- See [ARCHITECTURE.md](docs/architecture.md) for detailed technical documentation
 
 ## 📖 Documentation
 
 ### English Documentation
 - [API Reference](docs/api-reference.md) - Complete API documentation
+- [Architecture](ARCHITECTURE.md) - System design, module organization, and extension guide
 - [Examples](docs/examples/) - Usage examples and tutorials
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [FAQ](docs/faq.md) - Frequently asked questions
-- [Architecture](docs/architecture.md) - Deep dive into architecture
 - [Configuration](docs/configuration.md) - Configuration options
 - [Performance Tuning](docs/performance-tuning.md) - Optimization guide
 - [Contributing](CONTRIBUTING.md) - How to contribute
@@ -375,10 +401,14 @@ npx tsx examples/simple-test.ts
 awesome-pulgin/
 ├── src/
 │   ├── core/
-│   │   ├── gateway.ts           # Main MCP gateway
-│   │   ├── mcp-client.ts        # MCP server client
-│   │   ├── session-manager.ts   # Session management
-│   │   └── tool-loader.ts       # 3-layer tool loading
+│   │   ├── gateway.ts              # Main orchestration (298 lines)
+│   │   ├── types.ts                # Centralized type definitions
+│   │   ├── feature-coordinator.ts  # Internal feature management
+│   │   ├── mcp-server-manager.ts   # External MCP server lifecycle
+│   │   ├── tool-search-engine.ts   # Search orchestration
+│   │   ├── mcp-client.ts           # MCP server client
+│   │   ├── session-manager.ts      # Session management
+│   │   └── tool-loader.ts          # 3-layer tool loading
 │   ├── features/                # 🧬 Absorbed features
 │   │   ├── memory/              # claude-mem (v0.1.0)
 │   │   │   ├── memory-manager.ts
