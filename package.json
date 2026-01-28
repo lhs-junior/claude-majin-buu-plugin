@@ -1,11 +1,11 @@
 {
   "name": "awesome-plugin",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Awesome MCP Meta Plugin - Intelligent tool selection and auto-discovery for MCP servers",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.mts",
   "bin": {
-    "awesome-plugin": "./dist/cli.js"
+    "awesome-plugin": "./dist/cli.mjs"
   },
   "scripts": {
     "build": "tsup",
@@ -49,6 +49,7 @@
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },
+  "files": ["dist/", "skills/"],
   "engines": {
     "node": ">=18.0.0"
   },
