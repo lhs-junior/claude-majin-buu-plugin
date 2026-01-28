@@ -44,13 +44,13 @@ src/
 |--------|-------|-------------|
 | Memory | 4 | ~1,200 |
 | Agents | 5 | ~1,500 |
-| Planning | 4 (after adding delete) | ~1,000 |
+| Planning | 3 | ~1,000 |
 | TDD | 4 | ~1,200 |
 | Guide | 2 | ~600 |
 | Science | 3 | ~900 |
-| **Total** | **22** | **~6,400** |
+| **Total** | **21** | **~6,100** |
 
-Note: Original estimate of 34 tools included specialist agent types as separate tools. Actual MCP tool count is 21 (becomes 22 after exposing `planning_delete`), but specialist prompts add significant context.
+Note: Original estimate of 34 tools included specialist agent types as separate tools. Actual MCP tool count is 21, but specialist prompts add significant context.
 
 ### Research Findings
 
@@ -100,9 +100,8 @@ Create 7 Claude Code Plugin skill files that wrap the existing TypeScript implem
 6. **Updated Documentation** - README and feature docs
 
 ### Definition of Done
-- [ ] `planning_delete` exposed as MCP tool
 - [ ] All 7 skill files created and functional
-- [ ] CLI supports all 22 tool operations
+- [ ] CLI supports all 21 tool operations
 - [ ] `install-skills` command works (including `--link` dev mode)
 - [ ] Existing SQLite databases remain compatible
 - [ ] Cross-system integrations preserved (Memory <-> Agent <-> Planning)
@@ -134,10 +133,8 @@ Create 7 Claude Code Plugin skill files that wrap the existing TypeScript implem
 ## Task Flow and Dependencies
 
 ```
-Phase 1: Foundation (Tasks 0-3.5)
+Phase 1: Foundation (Tasks 1-3.5)
     |
-    +-> [0] Expose planning_delete MCP tool (PREREQUISITE)
-    |       |
     +-> [1] CLI Architecture (10h - starting from ZERO subcommands)
     |       |
     +-> [2] Export Cleanup ----+
@@ -172,58 +169,13 @@ Phase 3: Integration (Tasks 11-13)
 
 ### Phase 1: Foundation
 
-#### TODO 0: Expose `planning_delete` as MCP Tool
-**Priority:** Critical (Prerequisite)
-**Estimated Effort:** 0.5 hours
-**Dependencies:** None
-
-**Description:**
-The `planning_delete` implementation already exists at line 207 in `planning-manager.ts`, but it is not exposed in `getToolDefinitions()`. This task adds the tool definition, validation schema, and handler case.
-
-**Files to Modify:**
-- `/Users/hyunsoo/personal-projects/awesome-pulgin/src/features/planning/planning-manager.ts`
-
-**Implementation Steps:**
-1. Add `planning_delete` to `getToolDefinitions()` return array
-2. Create Zod validation schema for delete parameters (requires `id: string`)
-3. Add `case 'planning_delete':` in `handleToolCall()` switch statement
-4. Wire case to existing delete implementation at line 207
-
-**Acceptance Criteria:**
-- [ ] `planning_delete` appears in `getToolDefinitions()` output
-- [ ] Zod schema validates `{ id: string }` input
-- [ ] `handleToolCall('planning_delete', { id: 'xxx' })` invokes delete logic
-- [ ] Existing tests still pass
-
-**Code Pattern:**
-```typescript
-// In getToolDefinitions()
-{
-  name: 'planning_delete',
-  description: 'Delete a TODO item by ID',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      id: { type: 'string', description: 'The TODO ID to delete' }
-    },
-    required: ['id']
-  }
-}
-
-// In handleToolCall()
-case 'planning_delete':
-  return this.deleteTodo(input.id);
-```
-
----
-
 #### TODO 1: CLI Architecture Refactoring
 **Priority:** Critical
 **Estimated Effort:** 10 hours (revised from 4h - current CLI has ZERO feature subcommands)
-**Dependencies:** TODO 0
+**Dependencies:** None
 
 **Description:**
-The current `src/cli.ts` has no feature subcommands. This task creates the entire CLI subcommand structure from scratch for all 22 operations using Commander.js scaffolding pattern.
+The current `src/cli.ts` has no feature subcommands. This task creates the entire CLI subcommand structure from scratch for all 21 operations using Commander.js scaffolding pattern.
 
 **Files to Modify:**
 - `/Users/hyunsoo/personal-projects/awesome-pulgin/src/cli.ts`
@@ -244,7 +196,7 @@ The current `src/cli.ts` has no feature subcommands. This task creates the entir
 7. Add comprehensive help text for each command
 
 **Acceptance Criteria:**
-- [ ] All 22 operations accessible via CLI
+- [ ] All 21 operations accessible via CLI
 - [ ] JSON output mode works for all commands
 - [ ] Database path configurable via flag or env var
 - [ ] Exit codes reflect success/failure
@@ -282,7 +234,7 @@ memoryCmd
   .option('--json', 'Output as JSON')
   .action(async (query, opts) => { /* ... */ });
 
-// ... repeat for all 22 commands
+// ... repeat for all 21 commands
 ```
 
 ---
@@ -518,10 +470,10 @@ Create `awesome-agents.md` skill file for agent orchestration.
 #### TODO 6: Planning Skill File
 **Priority:** High
 **Estimated Effort:** 1 hour
-**Dependencies:** TODO 0 (planning_delete exposed), TODO 1, TODO 3
+**Dependencies:** TODO 1, TODO 3
 
 **Description:**
-Create `awesome-planning.md` skill file for TODO/task management. Now includes `planning delete` operation.
+Create `awesome-planning.md` skill file for TODO/task management.
 
 **File to Create:**
 - `/Users/hyunsoo/personal-projects/awesome-pulgin/skills/awesome-planning.md`
@@ -532,11 +484,10 @@ Create `awesome-planning.md` skill file for TODO/task management. Now includes `
 | `planning create <content>` | Create new TODO |
 | `planning update <id>` | Update TODO status/content |
 | `planning tree` | Visualize dependency tree |
-| `planning delete <id>` | Remove TODO (NEW - enabled by TODO 0) |
 
 **Acceptance Criteria:**
 - [ ] Skill file created at `/Users/hyunsoo/personal-projects/awesome-pulgin/skills/awesome-planning.md`
-- [ ] All 4 operations documented (including delete)
+- [ ] All 3 operations documented
 - [ ] Dependency/parent relationship explained
 - [ ] TDD integration documented
 - [ ] Token count under 700
@@ -684,7 +635,6 @@ Verify all cross-system integrations work through the new CLI interface.
 3. TDD workflow creates planning TODOs
 4. Guide completion saves to memory
 5. Science results persist to memory
-6. `planning delete` removes TODOs correctly
 
 **Acceptance Criteria:**
 - [ ] All integration scenarios tested
@@ -766,17 +716,16 @@ Create comprehensive documentation for the new plugin system.
 
 | Commit | Tasks | Description |
 |--------|-------|-------------|
-| 1 | TODO 0 | feat(planning): expose planning_delete as MCP tool |
-| 2 | TODO 1 | feat(cli): add subcommand structure for all 22 operations |
-| 3 | TODO 2 | refactor(exports): create clean plugin API, update package.json files |
-| 4 | TODO 2.5 | feat(cli): add install-skills command with --link dev mode |
-| 5 | TODO 3 | feat(plugin): add wrapper module with lazy initialization |
-| 6 | TODO 4-6 | feat(skills): add memory, agents, planning skills |
-| 7 | TODO 7-9 | feat(skills): add tdd, guide, science skills |
-| 8 | TODO 10 | feat(skills): add specialists skill with all agent types |
-| 9 | TODO 11 | test: add cross-system integration tests for CLI |
-| 10 | TODO 12 | perf: optimize skill file token counts |
-| 11 | TODO 13 | docs: add migration guide and update README |
+| 1 | TODO 1 | feat(cli): add subcommand structure for all 21 operations |
+| 2 | TODO 2 | refactor(exports): create clean plugin API, update package.json files |
+| 3 | TODO 2.5 | feat(cli): add install-skills command with --link dev mode |
+| 4 | TODO 3 | feat(plugin): add wrapper module with lazy initialization |
+| 5 | TODO 4-6 | feat(skills): add memory, agents, planning skills |
+| 6 | TODO 7-9 | feat(skills): add tdd, guide, science skills |
+| 7 | TODO 10 | feat(skills): add specialists skill with all agent types |
+| 8 | TODO 11 | test: add cross-system integration tests for CLI |
+| 9 | TODO 12 | perf: optimize skill file token counts |
+| 10 | TODO 13 | docs: add migration guide and update README |
 
 ---
 
@@ -784,7 +733,7 @@ Create comprehensive documentation for the new plugin system.
 
 ### Quantitative
 - [ ] Token reduction: >= 93% (10,200 -> ~700 per skill)
-- [ ] All 22 operations functional via CLI (including planning delete)
+- [ ] All 21 operations functional via CLI
 - [ ] All existing tests pass
 - [ ] No database migration required
 
@@ -816,7 +765,6 @@ Create comprehensive documentation for the new plugin system.
 1. Verify current test suite passes: `npm test`
 2. Verify build works: `npm run build`
 3. Document current token count baseline
-4. Verify `planning_delete` implementation exists at line 207 in planning-manager.ts
 
 ### Post-Implementation
 1. Run all tests: `npm test`
@@ -850,9 +798,6 @@ Rationale: User-level persistence, shared across projects unless overridden.
 
 ### CLI Starting Point
 The current `src/cli.ts` has ZERO feature subcommands. TODO 1 builds the entire CLI from scratch, hence the 10-hour estimate.
-
-### planning_delete Status
-Implementation exists at line 207 in `planning-manager.ts` but is not exposed in `getToolDefinitions()`. TODO 0 adds the necessary wiring.
 
 ---
 
