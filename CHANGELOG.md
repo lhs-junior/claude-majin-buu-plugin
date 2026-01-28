@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-01-28
+
+### 🧬 Fourth Absorption: guide system - Self-Documenting System
+
+This release introduces inspiration-based absorption (not direct absorption) from the guide system projects. Instead of absorbing existing code, we created new guide tools inspired by their concepts of interactive learning and documentation.
+
+**Quality Score**: 92/100 (Grade: A-)
+
+### Added
+
+#### Guide System Tools (2 new tools)
+
+- **`guide_search`**: Search through interactive code guides and documentation
+  - Full-text search across guide titles, descriptions, and content
+  - Contextual snippet matching for quick learning
+  - Returns top matching guides with relevance scores
+
+- **`guide_tutorial`**: Access interactive tutorials and learning paths
+  - Step-by-step guidance for complex tasks
+  - Code examples with explanations
+  - Integration with existing agents and planning system
+
+#### Initial Guide Library (5 guides)
+
+1. **Getting Started with Claude Code** - Welcome guide for new users
+2. **Building with awesome-plugin** - Integration and development guide
+3. **Absorption Engine Deep Dive** - Understanding the philosophy and architecture
+4. **Memory System Best Practices** - Effective use of memory tools
+5. **TDD Workflow Mastery** - Step-by-step TDD cycle enforcement
+
+#### Synergy Features
+
+- **Planning ↔ Guide Integration**: Create learning tasks assigned to specific guides
+- **Memory ↔ Guide Integration**: Save learnings and tutorial progress to memory
+- **Search Integration**: Guides indexed in BM25 search engine for discovery
+- **Agent ↔ Guide Integration**: Agents can recommend relevant guides for tasks
+
+### Improved
+
+#### Documentation System
+
+- **Self-Documenting Architecture**: Guides describe the system itself
+- **Interactive Learning**: Connect guides with actual tool usage
+- **Knowledge Reusability**: Save guide insights to memory for context awareness
+- **Task-Guided Learning**: Link planning tasks with appropriate guides
+
+### Inspiration Sources
+
+This release was inspired by (not absorbed from):
+- [zebbern/claude-code-guide](https://github.com/zebbern/claude-code-guide) - Interactive guide concepts
+- [Cranot/claude-code-guide](https://github.com/Cranot/claude-code-guide) - Learning path organization
+
+Our approach: Instead of absorbing their code, we created new guide tools inspired by their vision of interactive documentation.
+
+### Quality Evaluation
+
+**92/100 (Grade: A-)** - Inspiration-based approach
+
+- **Functional Innovation** (30/30): Created new guide paradigm
+- **Synergy Score** (28/30): Full integration with Memory + Agents + Planning
+- **Architectural Fit** (18/20): Self-contained system with strong connections
+- **Maintainability** (16/20): Modular guide library with clear structure
+- **Community Value** (0/0): Bonus for documentation excellence
+
+### Statistics
+
+- **Total Tools**: 28 (4 memory + 5 agent + 3 planning + 4 tdd + 10 specialist + 2 guide)
+- **Total Guides**: 5 initial guides (expandable)
+- **Absorbed Projects**: 6/8 (75% milestone)
+- **Quality Score Average**: 88.3/100
+
+### Documentation
+
+- **docs/guide-system-evaluation.md**: Complete quality evaluation and design rationale
+- **README.md**: Updated with Guide System section and 75% milestone
+- **CLI**: Updated `absorbed` command showing guide inspiration
+
 ## [0.4.0] - 2025-01-28
 
 ### 🧬 Third Absorption: agents (wshobson) - 10 Specialist Agents

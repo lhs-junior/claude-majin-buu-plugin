@@ -16,6 +16,23 @@ export { GitHubExplorer, type GitHubRepoInfo, type SearchOptions, type ExplorerO
 export { QualityEvaluator, type QualityScore, type EvaluationOptions } from './discovery/quality-evaluator.js';
 export { PluginInstaller, type InstallOptions, type InstallResult } from './discovery/plugin-installer.js';
 
+// Feature exports
+export { MemoryManager, type MemorySaveInput, type MemoryRecallInput, type MemoryListInput, type MemoryForgetInput } from './features/memory/memory-manager.js';
+export { MemoryStore, type MemoryRecord, type MemoryFilter } from './features/memory/memory-store.js';
+export { PlanningManager, type PlanningCreateInput, type PlanningUpdateInput, type PlanningTreeInput } from './features/planning/planning-manager.js';
+export { PlanningStore, type TodoRecord, type TodoFilter } from './features/planning/planning-store.js';
+export { GuideManager, type GuideSearchInput, type GuideTutorialInput } from './features/guide/guide-manager.js';
+export { GuideStore } from './features/guide/guide-store.js';
+export {
+  type GuideRecord,
+  type TutorialStep,
+  type LearningProgress,
+  type GuideFilter,
+  type GuideCategory,
+  type DifficultyLevel,
+  type LearningStatus
+} from './features/guide/guide-types.js';
+
 // Main entry point for running as MCP server
 async function main() {
   const { AwesomePluginGateway } = await import('./core/gateway.js');

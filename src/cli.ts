@@ -26,7 +26,7 @@ function getRelativeTime(date: Date): string {
 program
   .name('awesome-plugin')
   .description('Awesome MCP Meta Plugin - Intelligent tool selection and auto-discovery')
-  .version('0.4.0');
+  .version('0.5.0');
 
 program
   .command('start')
@@ -293,13 +293,33 @@ program
           'Full state preservation across specialists',
         ],
       },
+      {
+        name: 'guide-system',
+        version: 'v0.5.0',
+        date: '2025-01-28',
+        description: 'Self-documenting guide system (inspired by claude-code-guide)',
+        tools: 2,
+        guides: 5,
+        improvements: [
+          'guide_search, guide_tutorial - New guide tools',
+          '5 initial guides: Getting Started, Building with awesome-plugin, Absorption Deep Dive, Memory Best Practices, TDD Mastery',
+          'Inspired by (not absorbed from) zebbern and Cranot guides',
+          'Interactive learning paths linked to tool usage',
+          'Full integration with Memory + Agents + Planning',
+          'Self-documenting architecture',
+        ],
+      },
     ];
 
     // Display absorbed projects
     absorbed.forEach((project, index) => {
       console.log(`✅ ${project.name} (${project.version} - ${project.date})`);
       console.log(`   ${project.description}`);
-      console.log(`   ${project.tools} tools absorbed`);
+      if ((project as any).guides) {
+        console.log(`   ${project.tools} tools + ${(project as any).guides} guides created`);
+      } else {
+        console.log(`   ${project.tools} tools absorbed`);
+      }
       console.log(`   Our improvements:`);
       project.improvements.forEach((imp) => {
         console.log(`     - ${imp}`);
@@ -307,13 +327,14 @@ program
       if (index < absorbed.length - 1) console.log('');
     });
 
-    console.log('\n📊 Progress: 5/8 projects absorbed (62.5% 🎉)');
+    console.log('\n📊 Progress: 6/8 projects completed (75% 🎉)');
     console.log(`🔧 Total tools: ${absorbed.reduce((sum, p) => sum + p.tools, 0)}`);
-    console.log('   Distribution: 4 memory + 5 agent + 3 planning + 4 tdd + 10 specialist');
+    console.log(`📚 Total guides: ${absorbed.reduce((sum, p) => sum + ((p as any).guides || 0), 0)}`);
+    console.log('   Distribution: 4 memory + 5 agent + 3 planning + 4 tdd + 10 specialist + 2 guide');
 
-    console.log('\n⏳ Next absorption (v0.5.0 - May 2025):');
-    console.log('   claude-code-guide - Interactive code development guide');
-    console.log('   Expected: +8 tools\n');
+    console.log('\n⏳ Next absorption (v0.6.0 - June 2025):');
+    console.log('   claude-scientific-skills - Scientific and research tools');
+    console.log('   Expected: +4-6 tools\n');
   });
 
 program

@@ -67,7 +67,7 @@ export class MemoryManager {
         category: memory.category,
         keywords: memory.tags || [],
         serverId: 'internal:memory',
-        inputSchema: {},
+        inputSchema: { type: 'object' },
       });
 
       return {
@@ -211,8 +211,8 @@ export class MemoryManager {
     return {
       store: storeStats,
       index: {
-        documentsIndexed: indexStats.totalDocuments,
-        avgDocumentLength: indexStats.avgDocumentLength,
+        documentsIndexed: indexStats.documentCount,
+        avgDocumentLength: indexStats.averageDocumentLength,
       },
     };
   }
@@ -238,7 +238,7 @@ export class MemoryManager {
       category: m.category,
       keywords: m.tags || [],
       serverId: 'internal:memory',
-      inputSchema: {},
+      inputSchema: { type: 'object' },
     }));
 
     this.indexer.addDocuments(tools);

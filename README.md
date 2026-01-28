@@ -5,11 +5,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18.0.0-green)](https://nodejs.org/)
-[![Absorbed](https://img.shields.io/badge/absorbed-5%2F8-brightgreen)](README.md#-absorption-history)
-[![Tools](https://img.shields.io/badge/tools-26-blue)](README.md#-absorption-history)
+[![Absorbed](https://img.shields.io/badge/absorbed-6%2F8-brightgreen)](README.md#-absorption-history)
+[![Tools](https://img.shields.io/badge/tools-28-blue)](README.md#-absorption-history)
 
-**Status**: ✅ **v0.4.0 - 62.5% Milestone!**
-**Latest**: agents (wshobson) 흡수 완료 (10 Specialist Agents + Planning + TDD + Memory 통합)
+**Status**: ✅ **v0.5.0 - 75% Milestone!**
+**Latest**: guide-system 영감 (2 Guide Tools + 5 Initial Guides + Self-Documenting)
 
 ## 🎯 The Absorption Philosophy
 
@@ -175,6 +175,20 @@ npx tsx examples/simple-test.ts
 # Run benchmarks
 npx tsx tests/benchmark.ts
 ```
+
+## 📚 What's Inside
+
+The awesome-plugin combines **7 major feature systems** providing a comprehensive development environment:
+
+1. **Memory System** (4 tools) - Persistent memory with BM25 semantic search
+2. **Agent Orchestration** (5 tools) - Multi-agent coordination with parallel execution
+3. **Planning & TODO Tracking** (3 tools) - Hierarchical task management with dependencies
+4. **TDD Workflow** (4 tools) - RED-GREEN-REFACTOR cycle enforcement
+5. **Specialist Agents** (10 tools) - Researcher, Analyst, Designer, Coder, Teacher, Writer, Debugger, Reviewer, Optimizer, Strategist
+6. **Guide System** (2 tools) - Interactive documentation and learning paths
+7. **Tool Search** (BM25 engine) - Sub-millisecond intelligent tool discovery
+
+**Total: 28 built-in tools + expandable guide library**
 
 ## 🏗️ Architecture
 
@@ -458,7 +472,7 @@ MIT License - see [LICENSE](LICENSE) file
 
 ## 🧬 Absorption History
 
-### ✅ Absorbed Projects (5/8)
+### ✅ Absorbed Projects (6/8 - 75% Milestone)
 
 **1. claude-mem** (v0.1.0 - 2025-01-28)
 - **Original**: [supermemoryai/claude-mem](https://github.com/supermemoryai/claude-mem)
@@ -519,11 +533,25 @@ MIT License - see [LICENSE](LICENSE) file
   - No context sharing → Full state preservation across specialists
   - Manual selection → Intelligent specialist recommendation
 
+**6. guide-system** (v0.5.0 - 2025-01-28)
+
+- **Inspired By**: [zebbern/claude-code-guide](https://github.com/zebbern/claude-code-guide) and [Cranot/claude-code-guide](https://github.com/Cranot/claude-code-guide)
+- **Created**: New guide tools inspired by (not absorbed from) their concepts
+- **Tools**: 2 (`guide_search`, `guide_tutorial`)
+- **Initial Guides**: 5 (Getting Started, Building with awesome-plugin, Absorption Engine Deep Dive, Memory Best Practices, TDD Mastery)
+- **Quality Score**: 92/100 (Grade: A-)
+- **Our Approach**:
+  - Inspiration-based creation (not code absorption)
+  - Self-documenting system that teaches through guides
+  - Full integration with Memory + Agents + Planning
+  - Interactive learning paths linked to actual tool usage
+  - Expandable guide library for community contributions
+
 ### 🔮 Next Absorptions
 
-**v0.5.0 (May 2025)**: [claude-code-guide](https://github.com/zebbern/claude-code-guide)
-- Interactive code development guide
-- Expected: +8 tools, 82/100 quality score
+**v0.6.0 (Jun 2025)**: [claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills)
+- Scientific and research tools integration
+- Expected: +4-6 tools, 88/100 quality score
 
 **Vote for next absorption**: `node dist/cli.mjs vote <project>`
 
@@ -537,10 +565,9 @@ MIT License - see [LICENSE](LICENSE) file
 
 ### Future Absorptions
 
-- [superpowers](https://github.com/obra/superpowers) - TDD workflow (v0.3.0)
-- [agents (wshobson)](https://github.com/wshobson/agents) - Specialist agents (v0.4.0)
-- [claude-code-guide](https://github.com/zebbern/claude-code-guide) - Interactive guide (v0.5.0)
 - [claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills) - Scientific tools (v0.6.0)
+- [everything-claude-code](https://github.com/affaan-m/everything-claude-code) - Production patterns (v0.7.0)
+- Additional high-quality Claude Code projects (v0.8.0)
 
 ### Reference & Best Practices
 

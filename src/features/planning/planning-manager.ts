@@ -65,7 +65,7 @@ export class PlanningManager {
         category: 'planning',
         keywords: todo.tags,
         serverId: 'internal:planning',
-        inputSchema: {},
+        inputSchema: { type: 'object' },
       });
 
       return {
@@ -104,7 +104,7 @@ export class PlanningManager {
           category: 'planning',
           keywords: todo.tags,
           serverId: 'internal:planning',
-          inputSchema: {},
+          inputSchema: { type: 'object' },
         });
       }
 
@@ -158,7 +158,10 @@ export class PlanningManager {
       } else {
         for (let i = 0; i < roots.length; i++) {
           const isLast = i === roots.length - 1;
-          this.buildTreeLines(roots[i], '', isLast, lines, summary);
+          const todo = roots[i];
+          if (todo) {
+            this.buildTreeLines(todo, '', isLast, lines, summary);
+          }
         }
       }
 
@@ -227,8 +230,8 @@ export class PlanningManager {
     return {
       store: storeStats,
       index: {
-        documentsIndexed: indexStats.totalDocuments,
-        avgDocumentLength: indexStats.avgDocumentLength,
+        documentsIndexed: indexStats.documentCount,
+        avgDocumentLength: indexStats.averageDocumentLength,
       },
     };
   }
@@ -280,7 +283,10 @@ export class PlanningManager {
     const newPrefix = prefix + (isLast ? '  ' : '│ ');
     for (let i = 0; i < children.length; i++) {
       const childIsLast = i === children.length - 1;
-      this.buildTreeLines(children[i], newPrefix, childIsLast, lines, summary);
+      const child = children[i];
+      if (child) {
+        this.buildTreeLines(child, newPrefix, childIsLast, lines, summary);
+      }
     }
   }
 
@@ -305,7 +311,7 @@ export class PlanningManager {
       category: 'planning',
       keywords: todo.tags,
       serverId: 'internal:planning',
-      inputSchema: {},
+      inputSchema: { type: 'object' },
     }));
 
     this.indexer.addDocuments(tools);

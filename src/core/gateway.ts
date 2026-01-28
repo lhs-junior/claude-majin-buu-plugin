@@ -14,6 +14,8 @@ import { MemoryManager } from '../features/memory/memory-manager.js';
 import { AgentOrchestrator } from '../features/agents/agent-orchestrator.js';
 import { PlanningManager } from '../features/planning/planning-manager.js';
 import { TDDManager } from '../features/tdd/tdd-manager.js';
+import { GuideManager } from '../features/guide/guide-manager.js';
+import { initializeGuides } from '../features/guide/seed-guides.js';
 
 export interface MCPServerConfig {
   id: string;
@@ -45,6 +47,7 @@ export class AwesomePluginGateway {
   private agentOrchestrator: AgentOrchestrator;
   private planningManager: PlanningManager;
   private tddManager: TDDManager;
+  private guideManager: GuideManager;
   private connectedServers: Map<string, MCPServerConfig>;
   private mcpClients: Map<string, MCPClient>;
   private availableTools: Map<string, ToolMetadata>;
@@ -55,7 +58,7 @@ export class AwesomePluginGateway {
     this.server = new Server(
       {
         name: 'awesome-plugin',
-        version: '0.4.0',
+        version: '0.5.0',
       },
       {
         capabilities: {
@@ -81,6 +84,15 @@ export class AwesomePluginGateway {
       tddManager: this.tddManager,
     });
 
+    // Initialize GuideManager with cross-feature integration
+    this.guideManager = new GuideManager(options.dbPath || ':memory:', {
+      memoryManager: this.memoryManager,
+      planningManager: this.planningManager,
+    });
+
+    // Initialize guides from seed files if database is empty
+    this.initializeGuidesIfNeeded();
+
     this.connectedServers = new Map();
     this.mcpClients = new Map();
     this.availableTools = new Map();
@@ -94,7 +106,21 @@ export class AwesomePluginGateway {
   }
 
   /**
-   * Register internal feature tools (memory, agents, planning)
+   * Initialize guides from seed files if database is empty
+   */
+  private async initializeGuidesIfNeeded(): Promise<void> {
+    try {
+      // Use the GuideManager's store and indexer
+      const store = (this.guideManager as any).store;
+      const indexer = (this.guideManager as any).indexer;
+      await initializeGuides(store, indexer);
+    } catch (error) {
+      console.error('Failed to initialize guides:', error);
+    }
+  }
+
+  /**
+   * Register internal feature tools (memory, agents, planning, tdd, guide)
    */
   private registerInternalTools(): void {
     // Register the internal plugins in metadata store
@@ -126,6 +152,13 @@ export class AwesomePluginGateway {
       qualityScore: 100,
     });
 
+    this.metadataStore.addPlugin({
+      id: 'internal:guide',
+      name: 'Internal Guide System',
+      command: 'internal',
+      qualityScore: 100,
+    });
+
     // Register memory management tools
     const memoryTools = this.memoryManager.getToolDefinitions();
     for (const tool of memoryTools) {
@@ -150,13 +183,19 @@ export class AwesomePluginGateway {
       this.availableTools.set(tool.name, tool);
     }
 
+    // Register guide tools
+    const guideTools = this.guideManager.getToolDefinitions();
+    for (const tool of guideTools) {
+      this.availableTools.set(tool.name, tool);
+    }
+
     // Register in ToolLoader for BM25 search
-    this.toolLoader.registerTools([...memoryTools, ...agentTools, ...planningTools, ...tddTools]);
+    this.toolLoader.registerTools([...memoryTools, ...agentTools, ...planningTools, ...tddTools, ...guideTools]);
 
     // Save to metadata store
-    this.metadataStore.addTools([...memoryTools, ...agentTools, ...planningTools, ...tddTools]);
+    this.metadataStore.addTools([...memoryTools, ...agentTools, ...planningTools, ...tddTools, ...guideTools]);
 
-    console.log(`Registered ${memoryTools.length} memory + ${agentTools.length} agent + ${planningTools.length} planning + ${tddTools.length} tdd tools`);
+    console.log(`Registered ${memoryTools.length} memory + ${agentTools.length} agent + ${planningTools.length} planning + ${tddTools.length} tdd + ${guideTools.length} guide tools`);
   }
 
   private setupHandlers(): void {
@@ -209,6 +248,8 @@ export class AwesomePluginGateway {
           result = await this.planningManager.handleToolCall(toolName, request.params.arguments || {});
         } else if (toolMetadata.serverId === 'internal:tdd') {
           result = await this.tddManager.handleToolCall(toolName, request.params.arguments || {});
+        } else if (toolMetadata.serverId === 'internal:guide') {
+          result = await this.guideManager.handleToolCall(toolName, request.params.arguments || {});
         } else {
           // Forward to external MCP server
           const client = this.mcpClients.get(toolMetadata.serverId);
@@ -422,6 +463,7 @@ export class AwesomePluginGateway {
     this.agentOrchestrator.close();
     this.planningManager.close();
     this.tddManager.close();
+    this.guideManager.close();
 
     // Close database
     this.metadataStore.close();
