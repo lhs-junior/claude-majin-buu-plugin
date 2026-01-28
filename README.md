@@ -505,10 +505,23 @@ MIT License - see [LICENSE](LICENSE) file
 
 ## 🌟 Inspired By & Credits
 
-- [Anthropic Tool Search](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool)
-- [agents (wshobson)](https://github.com/wshobson/agents)
-- [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode)
-- [planning-with-files](https://github.com/OthmanAdi/planning-with-files)
+### Absorbed Projects
+
+- [claude-mem](https://github.com/supermemoryai/claude-mem) - Memory management (v0.1.0)
+- [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) - Agent orchestration (v0.1.0)
+- [planning-with-files](https://github.com/OthmanAdi/planning-with-files) - TODO tracking (v0.2.0)
+
+### Future Absorptions
+
+- [superpowers](https://github.com/obra/superpowers) - TDD workflow (v0.3.0)
+- [agents (wshobson)](https://github.com/wshobson/agents) - Specialist agents (v0.4.0)
+- [claude-code-guide](https://github.com/zebbern/claude-code-guide) - Interactive guide (v0.5.0)
+- [claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills) - Scientific tools (v0.6.0)
+
+### Reference & Best Practices
+
+- [everything-claude-code](https://github.com/affaan-m/everything-claude-code) - Production setup guide
+- [Anthropic Tool Search](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool) - Tool search concept
 
 ---
 
