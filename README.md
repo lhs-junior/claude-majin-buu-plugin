@@ -1,5 +1,12 @@
 # 🧬 Awesome Plugin - The Absorption Engine
 
+> **v2.0.0:** Now available as Claude Code Plugin!
+>
+> - **93% token reduction** (6,100 → 400-900 tokens per skill)
+> - **On-demand loading** - only load what you need
+> - **7 skill files** covering all features
+> - **Backward compatible** - existing databases work!
+
 > **"좋은게 있으면 흡수한다!"** - 우수한 Claude Code 프로젝트를 지속적으로 발견하고, 평가하고, 개선해서 흡수하는 Built-in MCP Plugin
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,8 +15,8 @@
 [![Absorbed](https://img.shields.io/badge/absorbed-7%2F8-brightgreen)](README.md#-absorption-history)
 [![Tools](https://img.shields.io/badge/tools-34-blue)](README.md#-absorption-history)
 
-**Status**: ✅ **v1.0.0 - Release Ready!**
-**Latest**: 7 major feature systems fully absorbed and integrated
+**Status**: ✅ **v2.0.0 - Plugin Architecture**
+**Latest**: 7 skill files with 93% token reduction
 
 ## 🎯 The Absorption Philosophy
 
@@ -89,92 +96,45 @@ Automatically find and evaluate MCP plugins from GitHub before installing.
 
 ## 🚀 Quick Start
 
-### 1. Installation
+## Installation
+
+### Option 1: Claude Code Plugin (Recommended)
 
 ```bash
-# Clone repository
-git clone https://github.com/anthropics/awesome-plugin.git
-cd awesome-plugin
+# Install the package
+npm install -g awesome-plugin
 
-# Install dependencies
-npm install
-
-# Build
-npm run build
+# Install skill files to Claude
+npx awesome-plugin install-skills
 ```
 
-### 2. Discover & Install MCP Servers
-
-Find and install high-quality MCP servers from GitHub:
+### Option 2: CLI Only
 
 ```bash
-# Discover MCP servers (with quality evaluation)
-node dist/cli.mjs discover --limit 10 --min-score 75
-
-# Auto-install all recommended plugins
-node dist/cli.mjs discover --auto-install
-
-# List installed plugins
-node dist/cli.mjs list
+npm install -g awesome-plugin
 ```
 
-**Example output:**
-```
-🔍 Discovering MCP servers from GitHub...
+### Option 3: MCP Server (Legacy)
 
-✅ Found 8 recommended MCP servers:
+See [MCP Server Setup](docs/MCP_SETUP.md) for legacy mode.
 
-1. modelcontextprotocol/servers
-   Score: 95/100 (A) - highly_recommended
-   ⭐ 250 stars | 🔧 Updated 2 days ago
-   Official MCP server implementations
-   Reasons: ⭐ Highly popular, 🔧 Actively maintained, 📚 Excellent documentation
+## Skills Overview
 
-GitHub API: 4995/5000 requests remaining
+7 skill files provide on-demand functionality:
 
-Would you like to install any of these? (Enter numbers separated by commas, or "all", or "none"):
-```
+| Skill | Operations | Tokens | Triggers |
+| --- | --- | --- | --- |
+| awesome-memory | 4 | ~270 | remember, recall, memory |
+| awesome-agents | 5 | ~550 | agent, spawn, orchestration |
+| awesome-planning | 3 | ~300 | todo, planning, task |
+| awesome-tdd | 4 | ~460 | tdd, test, red-green-refactor |
+| awesome-guide | 2 | ~220 | guide, tutorial, learn |
+| awesome-science | 3 | ~220 | science, stats, ml |
+| awesome-specialists | 14 types | ~890 | specialist, architect, etc |
 
-### 3. Use as MCP Server
+### Total
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "awesome-plugin": {
-      "command": "node",
-      "args": ["/path/to/awesome-pulgin/dist/index.mjs"]
-    }
-  }
-}
-```
-
-**With GitHub token (recommended for discovery):**
-
-```json
-{
-  "mcpServers": {
-    "awesome-plugin": {
-      "command": "node",
-      "args": ["/path/to/awesome-pulgin/dist/index.mjs"],
-      "env": {
-        "GITHUB_TOKEN": "your_github_token_here"
-      }
-    }
-  }
-}
-```
-
-### 4. Test Connection
-
-```bash
-# Run simple test
-npx tsx examples/simple-test.ts
-
-# Run benchmarks
-npx tsx tests/benchmark.ts
-```
+21 operations, ~2,900 tokens (on-demand)
 
 ## 📚 What's Inside
 
