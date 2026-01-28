@@ -6,6 +6,9 @@ export interface TodoRecord {
   parentId: string | null;
   content: string;
   status: 'pending' | 'in_progress' | 'completed';
+  type?: 'todo' | 'tdd'; // NEW: Task type (default: todo)
+  tddStatus?: 'red' | 'green' | 'refactored'; // NEW: TDD cycle phase
+  testPath?: string; // NEW: Path to test file (for TDD tasks)
   tags: string[];
   createdAt: number;
   updatedAt: number;
@@ -38,6 +41,9 @@ export class PlanningStore {
         parent_id TEXT,
         content TEXT NOT NULL,
         status TEXT DEFAULT 'pending',
+        type TEXT DEFAULT 'todo',
+        tdd_status TEXT,
+        test_path TEXT,
         tags TEXT,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
@@ -48,6 +54,8 @@ export class PlanningStore {
       CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status);
       CREATE INDEX IF NOT EXISTS idx_todos_parent_id ON todos(parent_id);
       CREATE INDEX IF NOT EXISTS idx_todos_created_at ON todos(created_at);
+      CREATE INDEX IF NOT EXISTS idx_todos_type ON todos(type);
+      CREATE INDEX IF NOT EXISTS idx_todos_tdd_status ON todos(tdd_status);
     `);
   }
 
@@ -60,6 +68,9 @@ export class PlanningStore {
       parentId?: string;
       tags?: string[];
       status?: 'pending' | 'in_progress' | 'completed';
+      type?: 'todo' | 'tdd'; // NEW
+      tddStatus?: 'red' | 'green' | 'refactored'; // NEW
+      testPath?: string; // NEW
     }
   ): TodoRecord {
     const id = randomUUID();
@@ -67,6 +78,9 @@ export class PlanningStore {
     const status = options?.status || 'pending';
     const parentId = options?.parentId || null;
     const tags = options?.tags || [];
+    const type = options?.type || 'todo';
+    const tddStatus = options?.tddStatus || null;
+    const testPath = options?.testPath || null;
 
     // Verify parent exists if specified
     if (parentId) {
@@ -77,8 +91,8 @@ export class PlanningStore {
     }
 
     const stmt = this.db.prepare(`
-      INSERT INTO todos (id, parent_id, content, status, tags, created_at, updated_at, completed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO todos (id, parent_id, content, status, type, tdd_status, test_path, tags, created_at, updated_at, completed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -86,6 +100,9 @@ export class PlanningStore {
       parentId,
       content,
       status,
+      type,
+      tddStatus,
+      testPath,
       JSON.stringify(tags),
       now,
       now,
@@ -119,6 +136,8 @@ export class PlanningStore {
       status?: 'pending' | 'in_progress' | 'completed';
       tags?: string[];
       parentId?: string;
+      tddStatus?: 'red' | 'green' | 'refactored'; // NEW
+      testPath?: string; // NEW
     }
   ): TodoRecord | null {
     const existing = this.get(id);
@@ -131,6 +150,8 @@ export class PlanningStore {
     const status = updates.status ?? existing.status;
     const tags = updates.tags ?? existing.tags;
     const parentId = updates.parentId !== undefined ? updates.parentId : existing.parentId;
+    const tddStatus = updates.tddStatus !== undefined ? updates.tddStatus : existing.tddStatus;
+    const testPath = updates.testPath !== undefined ? updates.testPath : existing.testPath;
 
     // Verify parent exists if specified
     if (parentId && parentId !== id) {
@@ -151,11 +172,11 @@ export class PlanningStore {
 
     const stmt = this.db.prepare(`
       UPDATE todos
-      SET content = ?, status = ?, tags = ?, parent_id = ?, updated_at = ?, completed_at = ?
+      SET content = ?, status = ?, tags = ?, parent_id = ?, tdd_status = ?, test_path = ?, updated_at = ?, completed_at = ?
       WHERE id = ?
     `);
 
-    stmt.run(content, status, JSON.stringify(tags), parentId, now, completedAt, id);
+    stmt.run(content, status, JSON.stringify(tags), parentId, tddStatus, testPath, now, completedAt, id);
 
     return this.get(id);
   }
@@ -292,6 +313,9 @@ export class PlanningStore {
       parentId: row.parent_id,
       content: row.content,
       status: row.status,
+      type: row.type || 'todo',
+      tddStatus: row.tdd_status || undefined,
+      testPath: row.test_path || undefined,
       tags: JSON.parse(row.tags || '[]'),
       createdAt: row.created_at,
       updatedAt: row.updated_at,

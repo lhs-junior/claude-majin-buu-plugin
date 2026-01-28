@@ -263,6 +263,21 @@ program
           'Agent integration (auto TODO creation)',
         ],
       },
+      {
+        name: 'superpowers',
+        version: 'v0.3.0',
+        date: '2025-01-28',
+        description: 'TDD workflow enforcement (38k+ stars!)',
+        tools: 4,
+        improvements: [
+          'Full framework → Focused TDD tools',
+          'Code deletion → Warnings only',
+          'Standalone → Integrated with Planning',
+          'RED-GREEN-REFACTOR cycle enforcement',
+          'Auto-detect test runner (Jest/Vitest/Mocha)',
+          'SQLite test run history',
+        ],
+      },
     ];
 
     // Display absorbed projects
@@ -277,12 +292,12 @@ program
       if (index < absorbed.length - 1) console.log('');
     });
 
-    console.log('\n📊 Progress: 3/8 projects absorbed (37.5%)');
+    console.log('\n📊 Progress: 4/8 projects absorbed (50% 🎉 Milestone!)');
     console.log(`🔧 Total tools: ${absorbed.reduce((sum, p) => sum + p.tools, 0)}`);
 
-    console.log('\n⏳ Next absorption (v0.3.0 - Mar 2025):');
-    console.log('   superpowers - TDD workflow enforcement');
-    console.log('   Expected: +4 tools\n');
+    console.log('\n⏳ Next absorption (v0.4.0 - Apr 2025):');
+    console.log('   agents (wshobson) - Specialized agent skills');
+    console.log('   Expected: +10 tools\n');
   });
 
 program

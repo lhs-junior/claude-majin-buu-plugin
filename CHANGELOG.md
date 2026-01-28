@@ -5,6 +5,136 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-28
+
+### 🧬 Second Absorption: superpowers (TDD Workflow)
+
+This release absorbs the TDD workflow enforcement concept from the massive [superpowers](https://github.com/obra/superpowers) framework (38k+ stars!).
+
+**Quality Score**: 80/100 (Grade: B)
+
+### Added
+
+#### TDD Workflow Enforcement (4 new tools)
+
+- **`tdd_red`**: RED phase - Create and verify failing test
+  - Ensures tests actually fail before implementation
+  - Prevents TDD violations (test passing immediately)
+  - Auto-detects test runner (Jest/Vitest/Mocha)
+  - Stores test run history in SQLite
+
+- **`tdd_green`**: GREEN phase - Verify test now passes
+  - Checks previous run was RED
+  - Verifies test passes after implementation
+  - Updates Planning TODO tddStatus automatically
+  - Enforces proper TDD cycle
+
+- **`tdd_refactor`**: REFACTOR phase - Improve code while keeping tests green
+  - Runs full test suite to prevent regressions
+  - Ensures all tests still pass after refactoring
+  - Tracks refactoring history
+
+- **`tdd_verify`**: Run full test suite with coverage
+  - Checks coverage meets threshold (default: 80%)
+  - Generates coverage reports
+  - Validates before committing
+
+#### Planning + TDD Integration
+
+- **Extended Planning Schema**:
+  - New `type` field: 'todo' | 'tdd'
+  - New `tddStatus` field: 'red' | 'green' | 'refactored'
+  - New `testPath` field for test file tracking
+
+- **Tree Visualization Enhancements**:
+  - TDD status icons: 🔴 RED, 🟢 GREEN, ✅ REFACTORED
+  - [TDD] badge for TDD tasks
+  - Test file paths in tree view
+
+#### Infrastructure
+
+- **TDDStore**: SQLite-based test run persistence
+  - Tracks all test runs (RED/GREEN/REFACTOR)
+  - Stores test output and coverage
+  - Performance metrics (duration)
+  - Statistics by status and test runner
+
+- **TDDManager**: TDD workflow orchestration
+  - Auto-detects test runner from package.json
+  - Executes tests and parses output
+  - Enforces RED-GREEN-REFACTOR discipline
+  - Integrates with Planning for task tracking
+
+### Improved
+
+#### Synergy Features
+
+- **Planning ↔ TDD Integration**:
+  - Create TDD tasks as children of feature TODOs
+  - Automatic tddStatus updates during workflow
+  - Visual tracking in dependency tree
+  - Filter TODOs by type='tdd'
+
+- **Agent → TDD Integration** (future):
+  - Agents can automatically follow TDD cycle
+  - Create TDD tasks during implementation
+  - Run tests and update status
+
+- **Memory ↔ TDD** (future):
+  - Save coverage reports to Memory
+  - Track test failure patterns
+  - Store TDD best practices
+
+### Our Improvements Over Original
+
+Original [superpowers](https://github.com/obra/superpowers) vs Our Implementation:
+
+| Feature | Original (superpowers) | Our Implementation |
+|---------|------------------------|-------------------|
+| Scope | Full framework (brainstorm, plan, execute, git worktrees) | Focused TDD tools only |
+| Code Deletion | **Deletes code written before tests** | Warnings only (user-friendly) |
+| Planning | Built-in planning system | Integrated with our Planning |
+| Agent System | Subagent-driven development | Integrated with our Agents |
+| Test Runner | Framework-specific | Auto-detect (Jest/Vitest/Mocha) |
+| Storage | Git-based | SQLite with history |
+| Complexity | High (complete workflow) | Low (4 simple tools) |
+| Integration | Standalone | Synergizes with Memory + Agents + Planning |
+
+### Testing
+
+- **tdd-test.ts**: Comprehensive TDD workflow demonstration
+  - Feature TODO with TDD subtasks
+  - RED-GREEN-REFACTOR cycle simulation
+  - Tree visualization with TDD icons
+  - Planning integration examples
+  - Synergy feature demonstrations
+
+### Statistics
+
+- **Total Tools**: 16 (4 memory + 5 agent + 3 planning + 4 tdd)
+- **Absorbed Projects**: 4/8 (50% complete)
+- **Quality Score Average**: 89/100 (claude-mem: 95, oh-my-claudecode: 95, planning-with-files: 86, superpowers: 80)
+
+### Documentation
+
+- **docs/superpowers-evaluation.md**: Complete quality evaluation (80/100)
+- **examples/tdd-test.ts**: TDD workflow demonstration
+- **README.md**: Updated absorption history
+- **CLI**: Updated `absorbed` command with superpowers
+
+### Design Decisions
+
+**Why we simplified superpowers**:
+1. **No code deletion**: Original deletes code written before tests - too aggressive for users
+2. **No git worktrees**: Original uses isolated git branches - adds complexity
+3. **No subagents**: Original has its own agent system - we use ours
+4. **Focused extraction**: Only absorbed TDD enforcement, not entire framework
+
+**Merge approach for Planning conflict**:
+- Extended existing Planning with `type='tdd'` instead of separate systems
+- Unified TODO tree shows both regular and TDD tasks
+- Single source of truth for all task tracking
+
 ## [0.2.0] - 2026-01-28
 
 ### 🧬 First Absorption: planning-with-files

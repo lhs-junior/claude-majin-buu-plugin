@@ -5,11 +5,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18.0.0-green)](https://nodejs.org/)
-[![Absorbed](https://img.shields.io/badge/absorbed-3%2F8-brightgreen)](README.md#-absorption-history)
-[![Tools](https://img.shields.io/badge/tools-12-blue)](README.md#-absorption-history)
+[![Absorbed](https://img.shields.io/badge/absorbed-4%2F8-brightgreen)](README.md#-absorption-history)
+[![Tools](https://img.shields.io/badge/tools-16-blue)](README.md#-absorption-history)
 
-**Status**: ✅ **v0.2.0 - First Absorption Complete!**
-**Latest**: planning-with-files 흡수 완료 (TODO 추적 + 의존성 관리 + Agent 시너지)
+**Status**: ✅ **v0.3.0 - 50% Milestone Reached!**
+**Latest**: superpowers 흡수 완료 (TDD 워크플로우 + Planning 통합 + RED-GREEN-REFACTOR)
 
 ## 🎯 The Absorption Philosophy
 
@@ -369,6 +369,7 @@ interface GatewayOptions {
 - [x] **Memory Management**: 4 tools (from claude-mem)
 - [x] **Agent Orchestration**: 5 tools (from oh-my-claudecode)
 - [x] **Planning & TODO Tracking**: 3 tools (from planning-with-files)
+- [x] **TDD Workflow**: 4 tools (from superpowers)
 - [x] **BM25 Search Engine**: 0.2-0.7ms performance
 - [x] **3-Layer Tool Loading**: 95% token reduction
 - [x] **SQLite Persistence**: Stateful storage
@@ -491,11 +492,25 @@ MIT License - see [LICENSE](LICENSE) file
   - Basic visualization → ASCII tree with status icons (🔄⏳✅)
   - Standalone → Integrated with Agents (auto TODO creation)
 
+**4. superpowers** (v0.3.0 - 2025-01-28)
+
+- **Original**: [obra/superpowers](https://github.com/obra/superpowers) (38k+ stars!)
+- **Absorbed**: TDD workflow enforcement
+- **Tools**: 4 (`tdd_red`, `tdd_green`, `tdd_refactor`, `tdd_verify`)
+- **Quality Score**: 80/100 (Grade: B)
+- **Our Improvements**:
+  - Full framework → Focused TDD tools
+  - Code deletion → Warnings only (user-friendly)
+  - Standalone planning → Integrated with our Planning
+  - Subagents → Integrated with our Agents
+  - Git worktrees → SQLite test run history
+  - Framework-specific → Auto-detect test runner (Jest/Vitest/Mocha)
+
 ### 🔮 Next Absorptions
 
-**v0.3.0 (Mar 2025)**: [superpowers](https://github.com/obra/superpowers)
-- TDD workflow enforcement
-- Expected: +4 tools, 80/100 quality score
+**v0.4.0 (Apr 2025)**: [agents (wshobson)](https://github.com/wshobson/agents)
+- Specialized agent skills (top 10 from 72)
+- Expected: +10 tools, 85/100 quality score
 
 **v0.4.0 (Apr 2025)**: [agents (wshobson)](https://github.com/wshobson/agents)
 - Specialized agent skills (top 10 from 72)

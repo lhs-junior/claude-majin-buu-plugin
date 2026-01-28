@@ -13,6 +13,7 @@ import { MCPClient } from './mcp-client.js';
 import { MemoryManager } from '../features/memory/memory-manager.js';
 import { AgentOrchestrator } from '../features/agents/agent-orchestrator.js';
 import { PlanningManager } from '../features/planning/planning-manager.js';
+import { TDDManager } from '../features/tdd/tdd-manager.js';
 
 export interface MCPServerConfig {
   id: string;
@@ -43,6 +44,7 @@ export class AwesomePluginGateway {
   private memoryManager: MemoryManager;
   private agentOrchestrator: AgentOrchestrator;
   private planningManager: PlanningManager;
+  private tddManager: TDDManager;
   private connectedServers: Map<string, MCPServerConfig>;
   private mcpClients: Map<string, MCPClient>;
   private availableTools: Map<string, ToolMetadata>;
@@ -53,7 +55,7 @@ export class AwesomePluginGateway {
     this.server = new Server(
       {
         name: 'awesome-plugin',
-        version: '0.2.0',
+        version: '0.3.0',
       },
       {
         capabilities: {
@@ -71,6 +73,7 @@ export class AwesomePluginGateway {
     this.memoryManager = new MemoryManager(options.dbPath || ':memory:');
     this.agentOrchestrator = new AgentOrchestrator(options.dbPath || ':memory:');
     this.planningManager = new PlanningManager(options.dbPath || ':memory:');
+    this.tddManager = new TDDManager(options.dbPath || ':memory:');
     this.connectedServers = new Map();
     this.mcpClients = new Map();
     this.availableTools = new Map();
@@ -109,6 +112,13 @@ export class AwesomePluginGateway {
       qualityScore: 100,
     });
 
+    this.metadataStore.addPlugin({
+      id: 'internal:tdd',
+      name: 'Internal TDD Workflow',
+      command: 'internal',
+      qualityScore: 100,
+    });
+
     // Register memory management tools
     const memoryTools = this.memoryManager.getToolDefinitions();
     for (const tool of memoryTools) {
@@ -127,13 +137,19 @@ export class AwesomePluginGateway {
       this.availableTools.set(tool.name, tool);
     }
 
+    // Register TDD tools
+    const tddTools = this.tddManager.getToolDefinitions();
+    for (const tool of tddTools) {
+      this.availableTools.set(tool.name, tool);
+    }
+
     // Register in ToolLoader for BM25 search
-    this.toolLoader.registerTools([...memoryTools, ...agentTools, ...planningTools]);
+    this.toolLoader.registerTools([...memoryTools, ...agentTools, ...planningTools, ...tddTools]);
 
     // Save to metadata store
-    this.metadataStore.addTools([...memoryTools, ...agentTools, ...planningTools]);
+    this.metadataStore.addTools([...memoryTools, ...agentTools, ...planningTools, ...tddTools]);
 
-    console.log(`Registered ${memoryTools.length} memory + ${agentTools.length} agent + ${planningTools.length} planning tools`);
+    console.log(`Registered ${memoryTools.length} memory + ${agentTools.length} agent + ${planningTools.length} planning + ${tddTools.length} tdd tools`);
   }
 
   private setupHandlers(): void {
@@ -184,6 +200,8 @@ export class AwesomePluginGateway {
           result = await this.agentOrchestrator.handleToolCall(toolName, request.params.arguments || {});
         } else if (toolMetadata.serverId === 'internal:planning') {
           result = await this.planningManager.handleToolCall(toolName, request.params.arguments || {});
+        } else if (toolMetadata.serverId === 'internal:tdd') {
+          result = await this.tddManager.handleToolCall(toolName, request.params.arguments || {});
         } else {
           // Forward to external MCP server
           const client = this.mcpClients.get(toolMetadata.serverId);
@@ -396,6 +414,7 @@ export class AwesomePluginGateway {
     this.memoryManager.close();
     this.agentOrchestrator.close();
     this.planningManager.close();
+    this.tddManager.close();
 
     // Close database
     this.metadataStore.close();

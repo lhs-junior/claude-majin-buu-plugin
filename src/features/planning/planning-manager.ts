@@ -7,6 +7,9 @@ export interface PlanningCreateInput {
   parentId?: string;
   tags?: string[];
   status?: 'pending' | 'in_progress' | 'completed';
+  type?: 'todo' | 'tdd'; // NEW: Task type
+  tddStatus?: 'red' | 'green' | 'refactored'; // NEW: TDD cycle phase
+  testPath?: string; // NEW: Path to test file
 }
 
 export interface PlanningUpdateInput {
@@ -15,6 +18,8 @@ export interface PlanningUpdateInput {
   status?: 'pending' | 'in_progress' | 'completed';
   tags?: string[];
   parentId?: string;
+  tddStatus?: 'red' | 'green' | 'refactored'; // NEW: Update TDD status
+  testPath?: string; // NEW: Update test path
 }
 
 export interface PlanningTreeInput {
@@ -48,6 +53,9 @@ export class PlanningManager {
         parentId: input.parentId,
         tags: input.tags,
         status: input.status,
+        type: input.type,
+        tddStatus: input.tddStatus,
+        testPath: input.testPath,
       });
 
       // Add to BM25 index for semantic search
@@ -83,6 +91,8 @@ export class PlanningManager {
         status: input.status,
         tags: input.tags,
         parentId: input.parentId,
+        tddStatus: input.tddStatus,
+        testPath: input.testPath,
       });
 
       if (todo) {
@@ -239,16 +249,29 @@ export class PlanningManager {
     else if (todo.status === 'in_progress') summary.inProgress++;
     else if (todo.status === 'completed') summary.completed++;
 
-    // Status icon
-    const statusIcon = todo.status === 'completed' ? '✅' : todo.status === 'in_progress' ? '🔄' : '⏳';
+    // Status icon (TDD-aware)
+    let statusIcon: string;
+    if (todo.type === 'tdd' && todo.tddStatus) {
+      // TDD tasks: show TDD cycle status
+      statusIcon = todo.tddStatus === 'red' ? '🔴' :
+                   todo.tddStatus === 'green' ? '🟢' :
+                   '✅'; // refactored
+    } else {
+      // Regular tasks: show normal status
+      statusIcon = todo.status === 'completed' ? '✅' :
+                   todo.status === 'in_progress' ? '🔄' :
+                   '⏳';
+    }
 
     // Branch characters
     const connector = isLast ? '└─' : '├─';
 
-    // Build line
-    const line = `${prefix}${connector} ${statusIcon} ${todo.content}`;
+    // Build line with type badge if TDD
+    const typeBadge = todo.type === 'tdd' ? '[TDD] ' : '';
+    const line = `${prefix}${connector} ${statusIcon} ${typeBadge}${todo.content}`;
     const tagsStr = todo.tags.length > 0 ? ` [${todo.tags.join(', ')}]` : '';
-    lines.push(line + tagsStr);
+    const testPathStr = todo.testPath ? ` (${todo.testPath})` : '';
+    lines.push(line + tagsStr + testPathStr);
 
     // Get children
     const children = this.store.getChildren(todo.id);
