@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-01-28
+
+### 🧬 Third Absorption: agents (wshobson) - 10 Specialist Agents
+
+This release absorbs the specialist agent system from [agents](https://github.com/wshobson/agents), expanding from their 72 available agents to include the top 10 specialist agent types.
+
+**Quality Score**: 85/100 (Grade: B+)
+
+### Added
+
+#### Specialist Agent Types (10 new tools)
+
+- **`specialist_researcher`**: Deep information research and analysis
+- **`specialist_analyst`**: Data analysis and pattern recognition
+- **`specialist_strategist`**: Strategic planning and decision support
+- **`specialist_designer`**: Design thinking and creative solutions
+- **`specialist_coder`**: Code generation and technical implementation
+- **`specialist_teacher`**: Educational content and explanations
+- **`specialist_writer`**: Content creation and documentation
+- **`specialist_debugger`**: Problem diagnosis and troubleshooting
+- **`specialist_reviewer`**: Code/content review and feedback
+- **`specialist_optimizer`**: Performance and efficiency improvements
+
+#### Synergy Features
+
+- **Planning ↔ Specialist Agents**: Create tasks assigned to specialist agent types
+- **Memory ↔ Specialist Agents**: Save specialist outputs to memory for reuse
+- **Agent Orchestration**: Spawn multiple specialists for parallel task execution
+- **Quality Integration**: Automatic quality scoring for specialist outputs
+
+### Improved
+
+#### Multi-Agent Coordination
+
+- **Parallel Specialist Execution**: Run multiple specialists simultaneously
+- **Agent Chain Management**: Sequential specialist handoff for complex workflows
+- **Result Aggregation**: Combine specialist outputs intelligently
+- **Context Preservation**: Share memory and planning state across agents
+
+### Statistics
+
+- **Total Tools**: 26 (4 memory + 5 agent + 3 planning + 4 tdd + 10 specialist)
+- **Absorbed Projects**: 5/8 (62.5% complete)
+- **Quality Score Average**: 86/100 (claude-mem: 95, oh-my-claudecode: 95, planning-with-files: 86, superpowers: 80, agents: 85)
+
+### Documentation
+
+- **docs/agents-evaluation.md**: Complete quality evaluation (85/100)
+- **README.md**: Updated absorption history and specialist agents section
+- **CLI**: Updated `absorbed` command with agents (wshobson)
+
 ## [0.3.0] - 2026-01-28
 
 ### 🧬 Second Absorption: superpowers (TDD Workflow)

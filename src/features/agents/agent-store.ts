@@ -1,7 +1,12 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'crypto';
 
-export type AgentType = 'researcher' | 'coder' | 'tester' | 'reviewer';
+export type AgentType =
+  | 'researcher' | 'coder' | 'tester' | 'reviewer'  // existing base agents
+  | 'architect' | 'frontend' | 'backend' | 'database'  // new specialist agents
+  | 'devops' | 'security' | 'performance' | 'documentation'
+  | 'bugfix' | 'refactor';
+
 export type AgentStatus = 'pending' | 'running' | 'completed' | 'failed' | 'timeout';
 
 export interface AgentRecord {
@@ -15,6 +20,9 @@ export interface AgentRecord {
   completedAt?: number;
   timeout?: number;
   progress?: string;
+  specialistConfig?: string; // JSON config for specialist-specific settings
+  parentTaskId?: string | null; // For task hierarchies
+  memoryKeys?: string; // JSON array of related memory IDs
 }
 
 export interface AgentFilter {
@@ -34,9 +42,10 @@ export class AgentStore {
   }
 
   /**
-   * Initialize database schema
+   * Initialize database schema with migration support
    */
   private initSchema(): void {
+    // Create base table
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS agents (
         id TEXT PRIMARY KEY,
@@ -55,21 +64,68 @@ export class AgentStore {
       CREATE INDEX IF NOT EXISTS idx_agents_type ON agents(type);
       CREATE INDEX IF NOT EXISTS idx_agents_started ON agents(started_at);
     `);
+
+    // Migrate schema for specialist agent support
+    this.migrateToSpecialistSchema();
+  }
+
+  /**
+   * Migrate schema to add specialist agent fields
+   */
+  private migrateToSpecialistSchema(): void {
+    // Check if specialist_config column exists
+    const checkColumn = this.db.prepare(`
+      SELECT COUNT(*) as count
+      FROM pragma_table_info('agents')
+      WHERE name='specialist_config'
+    `).get() as { count: number };
+
+    if (checkColumn.count === 0) {
+      // Add new columns for specialist agents
+      this.db.exec(`
+        ALTER TABLE agents ADD COLUMN specialist_config TEXT;
+        ALTER TABLE agents ADD COLUMN parent_task_id TEXT;
+        ALTER TABLE agents ADD COLUMN memory_keys TEXT;
+
+        CREATE INDEX IF NOT EXISTS idx_agents_parent_task ON agents(parent_task_id);
+      `);
+    }
   }
 
   /**
    * Create a new agent
    */
-  create(type: AgentType, task: string, timeout?: number): AgentRecord {
+  create(
+    type: AgentType,
+    task: string,
+    options?: {
+      timeout?: number;
+      specialistConfig?: Record<string, any>;
+      parentTaskId?: string | null;
+      memoryKeys?: string[];
+    }
+  ): AgentRecord {
     const id = randomUUID();
     const now = Date.now();
 
     const stmt = this.db.prepare(`
-      INSERT INTO agents (id, type, task, status, started_at, timeout)
-      VALUES (?, ?, ?, 'pending', ?, ?)
+      INSERT INTO agents (id, type, task, status, started_at, timeout, specialist_config, parent_task_id, memory_keys)
+      VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(id, type, task, now, timeout || null);
+    const specialistConfigJson = options?.specialistConfig ? JSON.stringify(options.specialistConfig) : null;
+    const memoryKeysJson = options?.memoryKeys ? JSON.stringify(options.memoryKeys) : null;
+
+    stmt.run(
+      id,
+      type,
+      task,
+      now,
+      options?.timeout || null,
+      specialistConfigJson,
+      options?.parentTaskId || null,
+      memoryKeysJson
+    );
 
     return {
       id,
@@ -77,7 +133,10 @@ export class AgentStore {
       task,
       status: 'pending',
       startedAt: now,
-      timeout,
+      timeout: options?.timeout,
+      specialistConfig: specialistConfigJson || undefined,
+      parentTaskId: options?.parentTaskId || null,
+      memoryKeys: memoryKeysJson || undefined,
     };
   }
 
@@ -226,6 +285,9 @@ export class AgentStore {
       completedAt: row.completed_at || undefined,
       timeout: row.timeout || undefined,
       progress: row.progress || undefined,
+      specialistConfig: row.specialist_config || undefined,
+      parentTaskId: row.parent_task_id || null,
+      memoryKeys: row.memory_keys || undefined,
     };
   }
 

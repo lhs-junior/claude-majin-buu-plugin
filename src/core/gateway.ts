@@ -55,7 +55,7 @@ export class AwesomePluginGateway {
     this.server = new Server(
       {
         name: 'awesome-plugin',
-        version: '0.3.0',
+        version: '0.4.0',
       },
       {
         capabilities: {
@@ -71,9 +71,16 @@ export class AwesomePluginGateway {
       filepath: options.dbPath || ':memory:',
     });
     this.memoryManager = new MemoryManager(options.dbPath || ':memory:');
-    this.agentOrchestrator = new AgentOrchestrator(options.dbPath || ':memory:');
     this.planningManager = new PlanningManager(options.dbPath || ':memory:');
     this.tddManager = new TDDManager(options.dbPath || ':memory:');
+
+    // Initialize AgentOrchestrator with full manager integration
+    this.agentOrchestrator = new AgentOrchestrator(options.dbPath || ':memory:', {
+      planningManager: this.planningManager,
+      memoryManager: this.memoryManager,
+      tddManager: this.tddManager,
+    });
+
     this.connectedServers = new Map();
     this.mcpClients = new Map();
     this.availableTools = new Map();

@@ -26,7 +26,7 @@ function getRelativeTime(date: Date): string {
 program
   .name('awesome-plugin')
   .description('Awesome MCP Meta Plugin - Intelligent tool selection and auto-discovery')
-  .version('0.1.0');
+  .version('0.4.0');
 
 program
   .command('start')
@@ -278,6 +278,21 @@ program
           'SQLite test run history',
         ],
       },
+      {
+        name: 'agents',
+        version: 'v0.4.0',
+        date: '2025-01-28',
+        description: 'Specialist agent types (top 10 from 72)',
+        tools: 10,
+        improvements: [
+          'specialist_researcher, specialist_analyst, specialist_strategist',
+          'specialist_designer, specialist_coder, specialist_teacher',
+          'specialist_writer, specialist_debugger, specialist_reviewer',
+          'specialist_optimizer - Dynamic specialist orchestration',
+          'Parallel execution with Agent coordination',
+          'Full state preservation across specialists',
+        ],
+      },
     ];
 
     // Display absorbed projects
@@ -292,12 +307,13 @@ program
       if (index < absorbed.length - 1) console.log('');
     });
 
-    console.log('\n📊 Progress: 4/8 projects absorbed (50% 🎉 Milestone!)');
+    console.log('\n📊 Progress: 5/8 projects absorbed (62.5% 🎉)');
     console.log(`🔧 Total tools: ${absorbed.reduce((sum, p) => sum + p.tools, 0)}`);
+    console.log('   Distribution: 4 memory + 5 agent + 3 planning + 4 tdd + 10 specialist');
 
-    console.log('\n⏳ Next absorption (v0.4.0 - Apr 2025):');
-    console.log('   agents (wshobson) - Specialized agent skills');
-    console.log('   Expected: +10 tools\n');
+    console.log('\n⏳ Next absorption (v0.5.0 - May 2025):');
+    console.log('   claude-code-guide - Interactive code development guide');
+    console.log('   Expected: +8 tools\n');
   });
 
 program

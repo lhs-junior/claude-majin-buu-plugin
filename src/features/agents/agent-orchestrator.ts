@@ -1,10 +1,21 @@
 import { AgentStore, AgentType, AgentStatus, AgentRecord } from './agent-store.js';
+import { AgentPromptRegistry } from './agent-prompt-registry.js';
 import type { ToolMetadata } from '../../core/gateway.js';
+import type { PlanningManager } from '../planning/planning-manager.js';
+import type { MemoryManager } from '../memory/memory-manager.js';
+import type { TDDManager } from '../tdd/tdd-manager.js';
 
 export interface SpawnAgentInput {
   type: AgentType;
   task: string;
   timeout?: number;
+  specialistConfig?: Record<string, any>;
+  parentTaskId?: string | null;
+  memoryKeys?: string[];
+  saveToMemory?: boolean;
+  memoryTags?: string[];
+  createTodo?: boolean;
+  testPath?: string; // For TDD workflow
 }
 
 export interface AgentStatusInput {
@@ -26,31 +37,154 @@ export interface AgentListInput {
 }
 
 /**
- * Agent Orchestrator - Manages agent lifecycle
+ * Agent Orchestrator - Manages agent lifecycle using Strategy Pattern
  * Inspired by oh-my-claudecode multi-agent pattern
+ *
+ * Features:
+ * - Strategy pattern for specialist agents via AgentPromptRegistry
+ * - Integration with Planning (TODO tracking)
+ * - Integration with Memory (result persistence)
+ * - Integration with TDD (test-first workflow)
  */
 export class AgentOrchestrator {
   private store: AgentStore;
+  private promptRegistry: AgentPromptRegistry;
   private runningAgents: Map<string, NodeJS.Timeout>;
+  private planningManager?: PlanningManager;
+  private memoryManager?: MemoryManager;
+  private tddManager?: TDDManager;
 
-  constructor(dbPath: string = ':memory:') {
+  constructor(
+    dbPath: string = ':memory:',
+    options?: {
+      planningManager?: PlanningManager;
+      memoryManager?: MemoryManager;
+      tddManager?: TDDManager;
+    }
+  ) {
     this.store = new AgentStore(dbPath);
+    this.promptRegistry = new AgentPromptRegistry();
     this.runningAgents = new Map();
+
+    // Optional integrations
+    this.planningManager = options?.planningManager;
+    this.memoryManager = options?.memoryManager;
+    this.tddManager = options?.tddManager;
   }
 
   /**
-   * Spawn a new agent
+   * Spawn a new agent using strategy pattern
+   * Enhanced with Planning, Memory, and TDD integrations
    */
-  spawn(input: SpawnAgentInput): { agentId: string; status: 'spawned' } {
-    // Create agent record
-    const agent = this.store.create(input.type, input.task, input.timeout);
+  async spawn(input: SpawnAgentInput): Promise<{ agentId: string; status: 'spawned'; prompt?: string; todoId?: string }> {
+    // Get prompt template from registry (strategy pattern)
+    const promptTemplate = this.promptRegistry.getPrompt(input.type);
+    const fullPrompt = promptTemplate.template(input.task, input.specialistConfig);
 
-    // Start agent execution asynchronously
-    this.executeAgent(agent);
+    // Create TODO if requested (Planning integration)
+    let todoId: string | undefined;
+    if (input.createTodo && this.planningManager) {
+      const todoResult = this.planningManager.create({
+        content: `Agent ${input.type}: ${input.task}`,
+        parentId: input.parentTaskId || undefined,
+        tags: ['agent', input.type, ...(input.memoryTags || [])],
+        status: 'in_progress',
+        type: input.testPath ? 'tdd' : 'todo',
+        testPath: input.testPath,
+      });
+      todoId = todoResult.todo.id;
+    }
+
+    // Create agent record with specialist configuration
+    const agent = this.store.create(input.type, input.task, {
+      timeout: input.timeout,
+      specialistConfig: input.specialistConfig,
+      parentTaskId: input.parentTaskId || todoId || null,
+      memoryKeys: input.memoryKeys,
+    });
+
+    // Start agent execution asynchronously with integrations
+    this.executeAgent(agent, {
+      saveToMemory: input.saveToMemory,
+      memoryTags: input.memoryTags,
+      todoId,
+    });
 
     return {
       agentId: agent.id,
       status: 'spawned',
+      prompt: fullPrompt,
+      todoId,
+    };
+  }
+
+  /**
+   * Helper: Spawn agent with Planning integration
+   */
+  async spawnWithPlanning(
+    type: AgentType,
+    task: string,
+    parentTodoId?: string,
+    options?: Partial<SpawnAgentInput>
+  ): Promise<{ agentId: string; todoId?: string }> {
+    const result = await this.spawn({
+      type,
+      task,
+      ...options,
+      parentTaskId: parentTodoId,
+      createTodo: true,
+    });
+
+    return {
+      agentId: result.agentId,
+      todoId: result.todoId,
+    };
+  }
+
+  /**
+   * Helper: Spawn agent with Memory integration
+   */
+  async spawnWithMemory(
+    type: AgentType,
+    task: string,
+    memoryTags: string[],
+    options?: Partial<SpawnAgentInput>
+  ): Promise<{ agentId: string }> {
+    const result = await this.spawn({
+      type,
+      task,
+      ...options,
+      saveToMemory: true,
+      memoryTags,
+    });
+
+    return {
+      agentId: result.agentId,
+    };
+  }
+
+  /**
+   * Helper: Spawn agent for TDD workflow
+   */
+  async spawnForTDD(
+    type: AgentType,
+    testPath: string,
+    task?: string,
+    options?: Partial<SpawnAgentInput>
+  ): Promise<{ agentId: string; todoId?: string }> {
+    const result = await this.spawn({
+      type,
+      task: task || `TDD workflow for ${testPath}`,
+      ...options,
+      testPath,
+      createTodo: true,
+      saveToMemory: true,
+      memoryTags: ['tdd', type],
+    });
+
+    return {
+      agentId: result.agentId,
+      todoId: result.todoId,
     };
   }
 
@@ -163,10 +297,24 @@ export class AgentOrchestrator {
   }
 
   /**
-   * Execute agent task (simulated for now)
+   * Get prompt registry (for testing or extension)
+   */
+  getPromptRegistry(): AgentPromptRegistry {
+    return this.promptRegistry;
+  }
+
+  /**
+   * Execute agent task with integration points
    * In production, this would spawn actual subprocesses or use Task tool
    */
-  private async executeAgent(agent: AgentRecord): Promise<void> {
+  private async executeAgent(
+    agent: AgentRecord,
+    options?: {
+      saveToMemory?: boolean;
+      memoryTags?: string[];
+      todoId?: string;
+    }
+  ): Promise<void> {
     // Update status to running
     this.store.updateStatus(agent.id, 'running', {
       progress: 'Starting agent...',
@@ -197,6 +345,26 @@ export class AgentOrchestrator {
       this.store.updateStatus(agent.id, 'completed', {
         result,
       });
+
+      // Save to Memory if requested (Memory integration)
+      if (options?.saveToMemory && this.memoryManager) {
+        await this.memoryManager.save({
+          key: `agent_${agent.type}_${agent.id}`,
+          value: JSON.stringify(result),
+          metadata: {
+            tags: ['agent', agent.type, ...(options.memoryTags || [])],
+            category: 'agent_result',
+          },
+        });
+      }
+
+      // Complete TODO if exists (Planning integration)
+      if (options?.todoId && this.planningManager) {
+        this.planningManager.update({
+          id: options.todoId,
+          status: 'completed',
+        });
+      }
     } catch (error: any) {
       // Clear timeout
       const timer = this.runningAgents.get(agent.id);
@@ -209,6 +377,14 @@ export class AgentOrchestrator {
       this.store.updateStatus(agent.id, status, {
         error: error.message,
       });
+
+      // Mark TODO as failed if exists (Planning integration)
+      if (options?.todoId && this.planningManager) {
+        this.planningManager.update({
+          id: options.todoId,
+          status: 'pending', // Reset to pending so it can be retried
+        });
+      }
     }
   }
 
@@ -226,9 +402,40 @@ export class AgentOrchestrator {
         return this.simulateTester(agent);
       case 'reviewer':
         return this.simulateReviewer(agent);
+      // Specialist agents
+      case 'architect':
+      case 'frontend':
+      case 'backend':
+      case 'database':
+      case 'devops':
+      case 'security':
+      case 'performance':
+      case 'documentation':
+      case 'bugfix':
+      case 'refactor':
+        return this.simulateSpecialistAgent(agent);
       default:
         throw new Error(`Unknown agent type: ${agent.type}`);
     }
+  }
+
+  private async simulateSpecialistAgent(agent: AgentRecord): Promise<any> {
+    const phases = ['Analyzing', 'Processing', 'Finalizing'];
+    for (let i = 0; i < phases.length; i++) {
+      this.store.updateStatus(agent.id, 'running', {
+        progress: `${phases[i]}... (${i + 1}/${phases.length})`,
+      });
+      await this.delay(800);
+    }
+
+    return {
+      type: agent.type,
+      summary: `${agent.type} task completed: ${agent.task}`,
+      config: agent.specialistConfig ? JSON.parse(agent.specialistConfig) : undefined,
+      parentTaskId: agent.parentTaskId,
+      memoryKeys: agent.memoryKeys ? JSON.parse(agent.memoryKeys) : undefined,
+      output: `Completed ${agent.type} specialist task successfully`,
+    };
   }
 
   private async simulateResearcher(agent: AgentRecord): Promise<any> {
@@ -321,6 +528,10 @@ export class AgentOrchestrator {
     return {
       store: this.store.getStatistics(),
       activeAgents: this.runningAgents.size,
+      promptRegistry: {
+        registeredTypes: this.promptRegistry.getRegisteredTypes().length,
+        types: this.promptRegistry.getRegisteredTypes(),
+      },
     };
   }
 
@@ -328,17 +539,19 @@ export class AgentOrchestrator {
    * Get MCP tool definitions
    */
   getToolDefinitions(): ToolMetadata[] {
+    const allAgentTypes = this.promptRegistry.getRegisteredTypes();
+
     return [
       {
         name: 'agent_spawn',
-        description: 'Spawn a specialized agent to handle a subtask. Agents work asynchronously and can be monitored.',
+        description: 'Spawn a specialized agent to handle a subtask. Agents work asynchronously and can be monitored. Supports Planning, Memory, and TDD integrations.',
         inputSchema: {
           type: 'object',
           properties: {
             type: {
               type: 'string',
-              enum: ['researcher', 'coder', 'tester', 'reviewer'],
-              description: 'Type of agent: researcher (web search & analysis), coder (code generation), tester (test execution), reviewer (code review)',
+              enum: allAgentTypes,
+              description: 'Type of agent - base: researcher (web search), coder (code gen), tester (test exec), reviewer (code review) | specialists: architect (design), frontend (UI/UX), backend (APIs), database (schema), devops (infra), security (audit), performance (optimization), documentation (docs), bugfix (debug), refactor (improve)',
             },
             task: {
               type: 'string',
@@ -348,11 +561,41 @@ export class AgentOrchestrator {
               type: 'number',
               description: 'Optional timeout in milliseconds (default: no timeout)',
             },
+            specialistConfig: {
+              type: 'object',
+              description: 'Optional specialist-specific configuration (JSON object)',
+            },
+            parentTaskId: {
+              type: 'string',
+              description: 'Optional parent task ID for task hierarchies',
+            },
+            memoryKeys: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Optional array of related memory IDs',
+            },
+            saveToMemory: {
+              type: 'boolean',
+              description: 'Auto-save agent results to memory',
+            },
+            memoryTags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Tags for memory categorization',
+            },
+            createTodo: {
+              type: 'boolean',
+              description: 'Create a TODO to track this agent task',
+            },
+            testPath: {
+              type: 'string',
+              description: 'Path to test file for TDD workflow',
+            },
           },
           required: ['type', 'task'],
         },
         category: 'agents',
-        keywords: ['agent', 'spawn', 'delegate', 'parallel', 'async', 'subtask'],
+        keywords: ['agent', 'spawn', 'delegate', 'parallel', 'async', 'subtask', 'specialist', 'strategy'],
         serverId: 'internal:agents',
       },
       {
@@ -419,7 +662,7 @@ export class AgentOrchestrator {
             },
             type: {
               type: 'string',
-              enum: ['researcher', 'coder', 'tester', 'reviewer'],
+              enum: allAgentTypes,
               description: 'Filter by agent type',
             },
             limit: {

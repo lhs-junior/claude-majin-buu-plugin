@@ -5,11 +5,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18.0.0-green)](https://nodejs.org/)
-[![Absorbed](https://img.shields.io/badge/absorbed-4%2F8-brightgreen)](README.md#-absorption-history)
-[![Tools](https://img.shields.io/badge/tools-16-blue)](README.md#-absorption-history)
+[![Absorbed](https://img.shields.io/badge/absorbed-5%2F8-brightgreen)](README.md#-absorption-history)
+[![Tools](https://img.shields.io/badge/tools-26-blue)](README.md#-absorption-history)
 
-**Status**: ✅ **v0.3.0 - 50% Milestone Reached!**
-**Latest**: superpowers 흡수 완료 (TDD 워크플로우 + Planning 통합 + RED-GREEN-REFACTOR)
+**Status**: ✅ **v0.4.0 - 62.5% Milestone!**
+**Latest**: agents (wshobson) 흡수 완료 (10 Specialist Agents + Planning + TDD + Memory 통합)
 
 ## 🎯 The Absorption Philosophy
 
@@ -458,7 +458,7 @@ MIT License - see [LICENSE](LICENSE) file
 
 ## 🧬 Absorption History
 
-### ✅ Absorbed Projects (3/8)
+### ✅ Absorbed Projects (5/8)
 
 **1. claude-mem** (v0.1.0 - 2025-01-28)
 - **Original**: [supermemoryai/claude-mem](https://github.com/supermemoryai/claude-mem)
@@ -506,15 +506,24 @@ MIT License - see [LICENSE](LICENSE) file
   - Git worktrees → SQLite test run history
   - Framework-specific → Auto-detect test runner (Jest/Vitest/Mocha)
 
+**5. agents** (v0.4.0 - 2025-01-28)
+
+- **Original**: [wshobson/agents](https://github.com/wshobson/agents)
+- **Absorbed**: Specialist agent types (10 from 72 available)
+- **Tools**: 10 (`specialist_researcher`, `specialist_analyst`, `specialist_strategist`, `specialist_designer`, `specialist_coder`, `specialist_teacher`, `specialist_writer`, `specialist_debugger`, `specialist_reviewer`, `specialist_optimizer`)
+- **Quality Score**: 85/100 (Grade: B+)
+- **Our Improvements**:
+  - 72 agents → Top 10 specialist types (focused extraction)
+  - Static agents → Dynamic integration with Memory + Planning + TDD
+  - Standalone → Parallel execution with Agent orchestration
+  - No context sharing → Full state preservation across specialists
+  - Manual selection → Intelligent specialist recommendation
+
 ### 🔮 Next Absorptions
 
-**v0.4.0 (Apr 2025)**: [agents (wshobson)](https://github.com/wshobson/agents)
-- Specialized agent skills (top 10 from 72)
-- Expected: +10 tools, 85/100 quality score
-
-**v0.4.0 (Apr 2025)**: [agents (wshobson)](https://github.com/wshobson/agents)
-- Specialized agent skills (top 10 from 72)
-- Expected: +10 tools, 85/100 quality score
+**v0.5.0 (May 2025)**: [claude-code-guide](https://github.com/zebbern/claude-code-guide)
+- Interactive code development guide
+- Expected: +8 tools, 82/100 quality score
 
 **Vote for next absorption**: `node dist/cli.mjs vote <project>`
 
