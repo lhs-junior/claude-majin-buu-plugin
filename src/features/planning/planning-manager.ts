@@ -1,14 +1,23 @@
 import { PlanningStore, TodoRecord, TodoFilter } from './planning-store.js';
+import { FindingsManager, FindingRecord, FindingFilter } from './findings-manager.js';
 import { BM25Indexer } from '../../search/bm25-indexer.js';
 import type { ToolMetadata } from '../../core/types.js';
 import {
   PlanningCreateInputSchema,
   PlanningUpdateInputSchema,
   PlanningTreeInputSchema,
+  FindingAddInputSchema,
+  FindingListInputSchema,
+  FindingExportInputSchema,
+  FindingDeleteInputSchema,
   validateInput,
   type PlanningCreateInput,
   type PlanningUpdateInput,
   type PlanningTreeInput,
+  type FindingAddInput,
+  type FindingListInput,
+  type FindingExportInput,
+  type FindingDeleteInput,
 } from '../../validation/schemas.js';
 import logger from '../../utils/logger.js';
 
@@ -17,14 +26,23 @@ export type {
   PlanningCreateInput,
   PlanningUpdateInput,
   PlanningTreeInput,
+  FindingAddInput,
+  FindingListInput,
+  FindingExportInput,
+  FindingDeleteInput,
 };
+
+// Re-export findings types
+export type { FindingRecord, FindingFilter } from './findings-manager.js';
 
 export class PlanningManager {
   private store: PlanningStore;
+  private findingsManager: FindingsManager;
   private indexer: BM25Indexer;
 
   constructor(dbPath: string = ':memory:') {
     this.store = new PlanningStore(dbPath);
+    this.findingsManager = new FindingsManager(dbPath);
     this.indexer = new BM25Indexer();
 
     // Index existing TODOs on initialization
@@ -216,11 +234,104 @@ export class PlanningManager {
   }
 
   /**
+   * Add a finding (decision, discovery, blocker, research, question)
+   */
+  addFinding(input: FindingAddInput): {
+    success: boolean;
+    finding: FindingRecord;
+  } {
+    try {
+      const finding = this.findingsManager.addFinding(input.type, input.content, {
+        context: input.context,
+        relatedTodoId: input.relatedTodoId,
+        tags: input.tags,
+      });
+
+      return {
+        success: true,
+        finding,
+      };
+    } catch (error: unknown) {
+      logger.error('Failed to add finding:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to add finding: ${message}`);
+    }
+  }
+
+  /**
+   * List findings with filters
+   */
+  listFindings(input?: FindingListInput): FindingRecord[] {
+    return this.findingsManager.list(input);
+  }
+
+  /**
+   * Export findings as markdown
+   */
+  exportFindings(input?: FindingExportInput): {
+    markdown: string;
+  } {
+    const markdown = this.findingsManager.exportMarkdown({
+      since: input?.since,
+      includeContext: input?.includeContext,
+    });
+
+    return { markdown };
+  }
+
+  /**
+   * Delete a finding
+   */
+  deleteFinding(input: FindingDeleteInput): { success: boolean } {
+    const success = this.findingsManager.delete(input.id);
+    return { success };
+  }
+
+  /**
+   * Get findings grouped by type
+   */
+  getFindingsGrouped(options?: { since?: number }) {
+    return this.findingsManager.getGroupedByType(options);
+  }
+
+  /**
+   * Capture finding when completing a TODO (convenience method)
+   */
+  completeTodoWithFinding(
+    todoId: string,
+    findingType?: 'decision' | 'discovery',
+    findingContent?: string
+  ): {
+    success: boolean;
+    todo: TodoRecord | null;
+    finding?: FindingRecord;
+  } {
+    // Update TODO status
+    const result = this.update({ id: todoId, status: 'completed' });
+
+    // Optionally capture finding
+    if (findingType && findingContent) {
+      const finding = this.findingsManager.addFinding(findingType, findingContent, {
+        relatedTodoId: todoId,
+      });
+
+      return {
+        success: result.success,
+        todo: result.todo,
+        finding,
+      };
+    }
+
+    return result;
+  }
+
+  /**
    * Get statistics
    */
   getStatistics() {
     const storeStats = this.store.getStatistics();
     const indexStats = this.indexer.getStatistics();
+    const findingsStats = this.findingsManager.getStatistics();
 
     return {
       store: storeStats,
@@ -228,6 +339,7 @@ export class PlanningManager {
         documentsIndexed: indexStats.documentCount,
         avgDocumentLength: indexStats.averageDocumentLength,
       },
+      findings: findingsStats,
     };
   }
 
@@ -409,6 +521,95 @@ export class PlanningManager {
         keywords: ['planning', 'tree', 'visualize', 'hierarchy', 'dependencies', 'overview'],
         serverId: 'internal:planning',
       },
+      {
+        name: 'finding_add',
+        description: 'Record a project finding: decision, discovery, blocker, research, or question. Links to TODOs for context.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              enum: ['decision', 'discovery', 'blocker', 'research', 'question'],
+              description: 'Type of finding',
+            },
+            content: {
+              type: 'string',
+              description: 'The finding content',
+            },
+            context: {
+              type: 'string',
+              description: 'Additional context or details (optional)',
+            },
+            relatedTodoId: {
+              type: 'string',
+              description: 'Related TODO ID (optional)',
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Tags for categorization (optional)',
+            },
+          },
+          required: ['type', 'content'],
+        },
+        category: 'planning',
+        keywords: ['planning', 'finding', 'decision', 'discovery', 'blocker', 'research', 'documentation'],
+        serverId: 'internal:planning',
+      },
+      {
+        name: 'finding_list',
+        description: 'List findings with optional filters (type, TODO, tags, date). Retrieve project knowledge.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              enum: ['decision', 'discovery', 'blocker', 'research', 'question'],
+              description: 'Filter by finding type (optional)',
+            },
+            relatedTodoId: {
+              type: 'string',
+              description: 'Filter by related TODO (optional)',
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Filter by tags (optional)',
+            },
+            since: {
+              type: 'number',
+              description: 'Timestamp filter (optional)',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max number of results (optional)',
+            },
+          },
+        },
+        category: 'planning',
+        keywords: ['planning', 'finding', 'list', 'search', 'filter'],
+        serverId: 'internal:planning',
+      },
+      {
+        name: 'finding_export',
+        description: 'Export findings as markdown file (findings.md format). Includes decisions, discoveries, blockers, research, and questions.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            since: {
+              type: 'number',
+              description: 'Only include findings after this timestamp (optional)',
+            },
+            includeContext: {
+              type: 'boolean',
+              description: 'Include context details (default: true)',
+            },
+          },
+        },
+        category: 'planning',
+        keywords: ['planning', 'finding', 'export', 'markdown', 'documentation'],
+        serverId: 'internal:planning',
+      },
     ];
   }
 
@@ -442,6 +643,38 @@ export class PlanningManager {
         return this.tree(validation.data!);
       }
 
+      case 'finding_add': {
+        const validation = validateInput(FindingAddInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.addFinding(validation.data!);
+      }
+
+      case 'finding_list': {
+        const validation = validateInput(FindingListInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.listFindings(validation.data);
+      }
+
+      case 'finding_export': {
+        const validation = validateInput(FindingExportInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.exportFindings(validation.data);
+      }
+
+      case 'finding_delete': {
+        const validation = validateInput(FindingDeleteInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.deleteFinding(validation.data!);
+      }
+
       default:
         throw new Error(`Unknown planning tool: ${toolName}`);
     }
@@ -452,5 +685,6 @@ export class PlanningManager {
    */
   close(): void {
     this.store.close();
+    this.findingsManager.close();
   }
 }

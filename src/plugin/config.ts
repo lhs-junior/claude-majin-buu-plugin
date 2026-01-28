@@ -4,6 +4,7 @@ import * as os from 'os';
 export interface PluginConfig {
   dbPath: string;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
+  autoCategorizationEnabled?: boolean;
 }
 
 /**
@@ -18,8 +19,12 @@ export function loadConfig(options?: Partial<PluginConfig>): PluginConfig {
     process.env.AWESOME_PLUGIN_LOG_LEVEL ||
     'info') as PluginConfig['logLevel'];
 
+  const autoCategorizationEnabled = options?.autoCategorizationEnabled ??
+    (process.env.AWESOME_PLUGIN_AUTO_CATEGORIZATION !== 'false');
+
   return {
     dbPath,
-    logLevel
+    logLevel,
+    autoCategorizationEnabled
   };
 }

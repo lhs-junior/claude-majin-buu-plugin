@@ -9,6 +9,7 @@ import { PlanningManager } from '../features/planning/planning-manager.js';
 import { TDDManager } from '../features/tdd/tdd-manager.js';
 import { GuideManager } from '../features/guide/guide-manager.js';
 import { ScienceManager } from '../features/science/index.js';
+import { WorktreeManager } from '../features/git/worktree-manager.js';
 import { initializeGuides } from '../features/guide/seed-guides.js';
 import { HooksManager, LifecycleHookType } from '../fusion/implementations/lifecycle-hooks-fusion.js';
 import { DashboardManager } from '../fusion/implementations/dashboard-fusion.js';
@@ -38,6 +39,7 @@ export class FeatureCoordinator {
   private tddManager: TDDManager;
   private guideManager: GuideManager;
   private scienceManager: ScienceManager;
+  private worktreeManager: WorktreeManager;
   private hooksManager: HooksManager;
   private dashboardManager: DashboardManager;
 
@@ -67,6 +69,9 @@ export class FeatureCoordinator {
       memoryManager: this.memoryManager,
       planningManager: this.planningManager,
     });
+
+    // Initialize WorktreeManager for git worktree integration
+    this.worktreeManager = new WorktreeManager(dbPath);
 
     // Initialize HooksManager and inject all managers for fusion
     this.hooksManager = new HooksManager();
@@ -135,6 +140,10 @@ export class FeatureCoordinator {
         name: 'Internal Science Tools',
       },
       {
+        id: 'internal:git',
+        name: 'Internal Git Worktree Management',
+      },
+      {
         id: 'internal:dashboard',
         name: 'Internal Dashboard Fusion',
       },
@@ -151,10 +160,11 @@ export class FeatureCoordinator {
     const tddTools = this.tddManager.getToolDefinitions();
     const guideTools = this.guideManager.getToolDefinitions();
     const scienceTools = this.scienceManager.getToolDefinitions();
+    const worktreeTools = this.worktreeManager.getToolDefinitions();
     const dashboardTools = this.getDashboardToolDefinitions();
 
     logger.info(
-      `FeatureCoordinator: ${memoryTools.length} memory + ${agentTools.length} agent + ${planningTools.length} planning + ${tddTools.length} tdd + ${guideTools.length} guide + ${scienceTools.length} science + ${dashboardTools.length} dashboard tools`
+      `FeatureCoordinator: ${memoryTools.length} memory + ${agentTools.length} agent + ${planningTools.length} planning + ${tddTools.length} tdd + ${guideTools.length} guide + ${scienceTools.length} science + ${worktreeTools.length} git + ${dashboardTools.length} dashboard tools`
     );
 
     return [
@@ -164,6 +174,7 @@ export class FeatureCoordinator {
       ...tddTools,
       ...guideTools,
       ...scienceTools,
+      ...worktreeTools,
       ...dashboardTools,
     ];
   }
@@ -297,6 +308,10 @@ export class FeatureCoordinator {
           result = await this.scienceManager.handleToolCall(toolName, args);
           break;
 
+        case 'internal:git':
+          result = await this.worktreeManager.handleToolCall(toolName, args);
+          break;
+
         case 'internal:dashboard':
           result = await this.handleDashboardToolCall(toolName, args);
           break;
@@ -368,6 +383,12 @@ export class FeatureCoordinator {
     } catch (error) {
       logger.error('Failed to close science manager:', error);
     }
+
+    try {
+      this.worktreeManager.close();
+    } catch (error) {
+      logger.error('Failed to close worktree manager:', error);
+    }
   }
 
   // Accessors for individual managers (primarily for testing and direct access)
@@ -393,6 +414,10 @@ export class FeatureCoordinator {
 
   getScienceManager(): ScienceManager {
     return this.scienceManager;
+  }
+
+  getWorktreeManager(): WorktreeManager {
+    return this.worktreeManager;
   }
 
   getHooksManager(): HooksManager {

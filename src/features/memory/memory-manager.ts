@@ -22,14 +22,27 @@ export type {
   MemoryForgetInput,
 };
 
+type MemoryCategory = 'decision' | 'bugfix' | 'feature' | 'discovery' | 'learning' | 'config' | 'idea';
+
+interface AutoCategorizationConfig {
+  enabled: boolean;
+}
+
 export class MemoryManager {
   private store: MemoryStore;
   private indexer: BM25Indexer;
   private cleanupInterval: NodeJS.Timeout | null = null;
+  private autoCategorizationConfig: AutoCategorizationConfig;
 
-  constructor(dbPath: string = ':memory:') {
+  constructor(
+    dbPath: string = ':memory:',
+    config?: { autoCategorizationEnabled?: boolean }
+  ) {
     this.store = new MemoryStore(dbPath);
     this.indexer = new BM25Indexer();
+    this.autoCategorizationConfig = {
+      enabled: config?.autoCategorizationEnabled ?? true,
+    };
 
     // Index existing memories on initialization
     this.reindexAll();
@@ -49,7 +62,30 @@ export class MemoryManager {
    */
   save(input: MemorySaveInput): { success: boolean; id: string; memory: MemoryRecord } {
     try {
-      const memory = this.store.save(input.key, input.value, input.metadata);
+      // Apply auto-categorization if enabled and not already categorized
+      const metadata = { ...input.metadata };
+
+      if (this.autoCategorizationConfig.enabled) {
+        const content = `${input.key} ${input.value}`;
+
+        // Auto-detect category if not provided
+        if (!metadata.category) {
+          metadata.category = this.analyzeMemoryContent(content);
+        }
+
+        // Auto-extract and merge tags if not provided or to supplement existing ones
+        const autoTags = this.extractKeywords(content);
+        if (metadata.tags) {
+          // Merge with existing tags, avoiding duplicates
+          const existingTags = new Set(metadata.tags);
+          autoTags.forEach(tag => existingTags.add(tag));
+          metadata.tags = Array.from(existingTags);
+        } else {
+          metadata.tags = autoTags;
+        }
+      }
+
+      const memory = this.store.save(input.key, input.value, metadata);
 
       // Add to BM25 index for semantic search
       this.indexer.addDocument({
@@ -402,6 +438,190 @@ export class MemoryManager {
       default:
         throw new Error(`Unknown memory tool: ${toolName}`);
     }
+  }
+
+  /**
+   * Analyze memory content to detect category
+   * Uses pattern matching based on keywords and context
+   */
+  private analyzeMemoryContent(content: string): MemoryCategory {
+    const lowerContent = content.toLowerCase();
+
+    // Category detection patterns (order matters - more specific first)
+    const categoryPatterns: Array<{ category: MemoryCategory; patterns: RegExp[] }> = [
+      {
+        category: 'bugfix',
+        patterns: [
+          /\b(fix(ed)?|bug|error|issue|crash|broken|repair|patch|resolve|debug)\b/,
+          /\b(doesn't work|not working|fails?|failing)\b/,
+          /\b(exception|stack trace|null pointer|undefined)\b/,
+        ],
+      },
+      {
+        category: 'feature',
+        patterns: [
+          /\b(implement(ed)?|add(ed)?|creat(e|ed)|built?|develop(ed)?)\b/,
+          /\b(feature|functionality|capability|enhancement)\b/,
+          /\b(new|introduce|enable)\b.*\b(feature|function|component)\b/,
+        ],
+      },
+      {
+        category: 'decision',
+        patterns: [
+          /\b(decid(e|ed)|chose|choice|select(ed)?|opt(ed)? for|went with)\b/,
+          /\b(instead of|rather than|prefer)\b/,
+        ],
+      },
+      {
+        category: 'config',
+        patterns: [
+          /\b(config(ure|uration)?|setting|environment|setup|install)\b/,
+          /\b(env|\.env|environment variable|flag|option)\b/,
+          /\b(enable|disable|toggle|switch)\b.*\b(feature|mode|option)\b/,
+        ],
+      },
+      {
+        category: 'learning',
+        patterns: [
+          /\b(learn(ed)? how)\b/,
+          /\b(tutorial|guide|documentation|example)\b/,
+        ],
+      },
+      {
+        category: 'discovery',
+        patterns: [
+          /\b(found|discover(ed)?|realiz(e|ed)|notic(e|ed))\b/,
+          /\b(turns? out|it seems|apparently|actually)\b/,
+          /\b(interesting|surprising|unexpected)\b/,
+        ],
+      },
+      {
+        category: 'idea',
+        patterns: [
+          /\b(idea|thought|consider|maybe|could|might|perhaps)\b/,
+          /\b(future|later|todo|potential|possible)\b/,
+          /\b(what if|brainstorm|proposal)\b/,
+        ],
+      },
+    ];
+
+    // Find matching category
+    for (const { category, patterns } of categoryPatterns) {
+      for (const pattern of patterns) {
+        if (pattern.test(lowerContent)) {
+          return category;
+        }
+      }
+    }
+
+    // Default to 'learning' if no specific pattern matched
+    return 'learning';
+  }
+
+  /**
+   * Extract relevant keywords from content
+   * Uses simple NLP: common tech terms, file extensions, framework names
+   */
+  private extractKeywords(content: string): string[] {
+    const keywords = new Set<string>();
+    const lowerContent = content.toLowerCase();
+
+    // Common tech terms and frameworks
+    const techTerms = [
+      // Languages
+      'javascript', 'typescript', 'python', 'java', 'go', 'rust', 'ruby', 'php', 'swift', 'kotlin',
+      'c++', 'csharp', 'c#', 'scala', 'elixir', 'clojure',
+
+      // Frameworks & Libraries
+      'react', 'vue', 'angular', 'svelte', 'next', 'nextjs', 'nuxt', 'gatsby',
+      'express', 'fastify', 'koa', 'nest', 'nestjs',
+      'django', 'flask', 'fastapi', 'rails', 'laravel',
+      'spring', 'springboot',
+
+      // Databases
+      'mysql', 'postgresql', 'postgres', 'mongodb', 'redis', 'elasticsearch', 'cassandra',
+      'dynamodb', 'sqlite', 'mariadb', 'oracle', 'mssql',
+
+      // Tools & Services
+      'docker', 'kubernetes', 'k8s', 'aws', 'azure', 'gcp', 'github', 'gitlab', 'jenkins',
+      'webpack', 'vite', 'rollup', 'babel', 'eslint', 'prettier',
+      'jest', 'mocha', 'vitest', 'pytest', 'junit',
+
+      // Concepts
+      'api', 'rest', 'graphql', 'grpc', 'websocket', 'oauth', 'jwt', 'auth', 'authentication',
+      'authorization', 'cache', 'caching', 'session', 'cookie',
+      'frontend', 'backend', 'fullstack', 'devops', 'cicd', 'ci/cd',
+      'microservice', 'serverless', 'lambda', 'container',
+      'database', 'sql', 'nosql', 'query', 'migration',
+      'testing', 'unit test', 'integration test', 'e2e',
+      'performance', 'optimization', 'scaling', 'load balancing',
+      'security', 'encryption', 'ssl', 'tls', 'https',
+      'logging', 'monitoring', 'metrics', 'tracing',
+      'ui', 'ux', 'design', 'css', 'html', 'dom',
+      'async', 'promise', 'callback', 'event',
+      'error', 'exception', 'debug', 'log',
+      'config', 'configuration', 'environment',
+      'build', 'deploy', 'release', 'version',
+    ];
+
+    // Check for tech terms
+    for (const term of techTerms) {
+      if (lowerContent.includes(term)) {
+        // Normalize terms (e.g., ci/cd -> cicd)
+        const normalizedTerm = term.replace(/[\/\-\s]/g, '');
+        keywords.add(normalizedTerm);
+      }
+    }
+
+    // Extract file extensions (e.g., .js, .ts, .py)
+    const extensionRegex = /\.(js|ts|tsx|jsx|py|java|go|rs|rb|php|swift|kt|cpp|cs|scala|ex|clj|yml|yaml|json|xml|html|css|scss|sass|sql|md|sh|env)\b/gi;
+    const extensions = content.match(extensionRegex);
+    if (extensions) {
+      extensions.forEach(ext => keywords.add(ext.substring(1))); // Remove the dot
+    }
+
+    // Extract common action words (including variations and as part of compound words)
+    const actionWords = [
+      'read', 'write', 'create', 'update', 'delete', 'fetch', 'send', 'receive',
+      'upload', 'download', 'save', 'load', 'process', 'parse', 'validate',
+      'authenticate', 'authorize', 'encrypt', 'decrypt', 'hash', 'token',
+      'install', 'configure', 'setup', 'deploy', 'build', 'compile',
+      'test', 'debug', 'fix', 'optimize', 'refactor', 'migrate',
+    ];
+
+    for (const word of actionWords) {
+      // Match as standalone word or as part of compound words (e.g., fetchData)
+      if (new RegExp(`\\b${word}(ed|ing|s|data)?\\b`, 'i').test(lowerContent)) {
+        keywords.add(word);
+      }
+    }
+
+    // Extract domain-specific terms (simple word tokenization)
+    const words = content
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 3 && word.length < 20);
+
+    // Add meaningful words that appear relevant (not common stop words)
+    const stopWords = new Set([
+      'this', 'that', 'with', 'from', 'have', 'been', 'were', 'will', 'their',
+      'what', 'when', 'where', 'which', 'while', 'about', 'would', 'there',
+      'could', 'should', 'these', 'those', 'into', 'through', 'after', 'before',
+    ]);
+
+    for (const word of words) {
+      if (!stopWords.has(word) && keywords.size < 10) {
+        // Only add if not already covered and limit to prevent tag explosion
+        const alreadyCovered = Array.from(keywords).some(kw => word.includes(kw) || kw.includes(word));
+        if (!alreadyCovered) {
+          keywords.add(word);
+        }
+      }
+    }
+
+    // Limit total tags to prevent explosion
+    return Array.from(keywords).slice(0, 15);
   }
 
   /**

@@ -10,6 +10,7 @@ import type { MemoryManager } from '../../features/memory/memory-manager.js';
 import type { PlanningManager } from '../../features/planning/planning-manager.js';
 import type { TDDManager } from '../../features/tdd/tdd-manager.js';
 import type { AgentOrchestrator } from '../../features/agents/agent-orchestrator.js';
+import type { ProgressManager } from '../../features/planning/progress-manager.js';
 
 /**
  * All supported hook types in the system
@@ -113,6 +114,7 @@ export class HooksManager {
   private planningManager?: PlanningManager;
   private tddManager?: TDDManager;
   private agentOrchestrator?: AgentOrchestrator;
+  private progressManager?: ProgressManager;
 
   constructor() {
     // Initialize hook arrays for each type
@@ -129,11 +131,13 @@ export class HooksManager {
     planningManager?: PlanningManager;
     tddManager?: TDDManager;
     agentOrchestrator?: AgentOrchestrator;
+    progressManager?: ProgressManager;
   }): void {
     this.memoryManager = managers.memoryManager;
     this.planningManager = managers.planningManager;
     this.tddManager = managers.tddManager;
     this.agentOrchestrator = managers.agentOrchestrator;
+    this.progressManager = managers.progressManager;
 
     // Register built-in hooks after managers are injected
     this.registerBuiltInHooks();
@@ -402,6 +406,16 @@ export class HooksManager {
       async (context) => {
         logger.info(`Session started: ${context.sessionId}`);
 
+        // Start progress session tracking
+        if (this.progressManager) {
+          try {
+            this.progressManager.startSession();
+            logger.debug('Started progress session tracking');
+          } catch (error) {
+            logger.error('Failed to start progress session:', error);
+          }
+        }
+
         // Restore state from previous session
         if (this.memoryManager && context.sessionId) {
           try {
@@ -423,6 +437,128 @@ export class HooksManager {
         }
       },
       { priority: 100, description: 'Restore session state' }
+    );
+
+    // SessionEnd → Progress: End session tracking
+    this.registerHook(
+      LifecycleHookType.SessionEnd,
+      async (context) => {
+        if (!this.progressManager) return;
+
+        try {
+          const summary = context.data?.summary as string | undefined;
+          this.progressManager.endSession(summary);
+          logger.debug('Ended progress session tracking');
+        } catch (error) {
+          logger.error('Failed to end progress session:', error);
+        }
+      },
+      { priority: 10, description: 'End progress session' }
+    );
+
+    // AgentCompleted → Progress: Log agent result
+    this.registerHook(
+      LifecycleHookType.AgentCompleted,
+      async (context) => {
+        if (!this.progressManager) return;
+
+        try {
+          const agentResult = context.data?.result as
+            | { success: boolean; message?: string; duration?: number }
+            | undefined;
+
+          const activity = context.data?.agentName
+            ? `Agent ${context.data.agentName} completed`
+            : 'Agent completed';
+
+          const result = agentResult?.success
+            ? agentResult.message || 'Agent completed successfully'
+            : 'Agent failed';
+
+          this.progressManager.logProgress({
+            activity,
+            result,
+            duration: agentResult?.duration,
+          });
+
+          logger.debug('Logged agent completion to progress');
+        } catch (error) {
+          logger.error('Failed to log agent completion:', error);
+        }
+      },
+      { priority: 5, description: 'Log agent completion to progress' }
+    );
+
+    // TDDCycleCompleted → Progress: Log test result
+    this.registerHook(
+      LifecycleHookType.TDDCycleCompleted,
+      async (context) => {
+        if (!this.progressManager) return;
+
+        try {
+          const tddData = context.data as
+            | {
+                phase?: string;
+                testPath?: string;
+                passed?: boolean;
+                duration?: number;
+              }
+            | undefined;
+
+          const phase = tddData?.phase || 'unknown';
+          const testPath = tddData?.testPath || 'test';
+          const passed = tddData?.passed ?? false;
+
+          const activity = `TDD ${phase} phase: ${testPath}`;
+          const result = passed ? 'Tests passed' : 'Tests failed';
+
+          this.progressManager.logProgress({
+            activity,
+            result,
+            duration: tddData?.duration,
+          });
+
+          logger.debug('Logged TDD cycle to progress');
+        } catch (error) {
+          logger.error('Failed to log TDD cycle:', error);
+        }
+      },
+      { priority: 5, description: 'Log TDD cycle to progress' }
+    );
+
+    // PlanningCompleted → Progress: Log planning result
+    this.registerHook(
+      LifecycleHookType.PlanningCompleted,
+      async (context) => {
+        if (!this.progressManager) return;
+
+        try {
+          const planningData = context.data as
+            | {
+                action?: string;
+                todoId?: string;
+                success?: boolean;
+              }
+            | undefined;
+
+          const action = planningData?.action || 'Planning action';
+          const todoId = planningData?.todoId;
+
+          const activity = `Planning: ${action}`;
+          const result = planningData?.success ? 'Planning completed' : 'Planning action performed';
+
+          this.progressManager.logProgress({
+            activity,
+            result,
+            relatedTodoId: todoId,
+          });
+
+          logger.debug('Logged planning action to progress');
+        } catch (error) {
+          logger.error('Failed to log planning action:', error);
+        }
+      },
+      { priority: 5, description: 'Log planning action to progress' }
     );
 
     logger.info('Registered built-in lifecycle hooks');

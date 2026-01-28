@@ -140,6 +140,37 @@ export const PlanningTreeInputSchema = z.object({
 });
 
 // =============================================================================
+// Findings Tool Schemas
+// =============================================================================
+
+export const FindingTypeSchema = z.enum(['decision', 'discovery', 'blocker', 'research', 'question']);
+
+export const FindingAddInputSchema = z.object({
+  type: FindingTypeSchema.describe('Type of finding'),
+  content: NonEmptyStringSchema.describe('The finding content'),
+  context: z.string().optional().describe('Additional context or details'),
+  relatedTodoId: z.string().optional().describe('Related TODO ID'),
+  tags: TagsSchema,
+});
+
+export const FindingListInputSchema = z.object({
+  type: FindingTypeSchema.optional(),
+  relatedTodoId: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  since: z.number().int().positive().optional(),
+  limit: PositiveIntSchema.optional(),
+});
+
+export const FindingExportInputSchema = z.object({
+  since: z.number().int().positive().optional(),
+  includeContext: z.boolean().optional(),
+});
+
+export const FindingDeleteInputSchema = z.object({
+  id: NonEmptyStringSchema.describe('The finding ID to delete'),
+});
+
+// =============================================================================
 // TDD Tool Schemas
 // =============================================================================
 
@@ -370,6 +401,11 @@ export type PlanningCreateInput = z.infer<typeof PlanningCreateInputSchema>;
 export type PlanningUpdateInput = z.infer<typeof PlanningUpdateInputSchema>;
 export type PlanningTreeInput = z.infer<typeof PlanningTreeInputSchema>;
 
+export type FindingAddInput = z.infer<typeof FindingAddInputSchema>;
+export type FindingListInput = z.infer<typeof FindingListInputSchema>;
+export type FindingExportInput = z.infer<typeof FindingExportInputSchema>;
+export type FindingDeleteInput = z.infer<typeof FindingDeleteInputSchema>;
+
 export type TDDRedInput = z.infer<typeof TDDRedInputSchema>;
 export type TDDGreenInput = z.infer<typeof TDDGreenInputSchema>;
 export type TDDRefactorInput = z.infer<typeof TDDRefactorInputSchema>;
@@ -381,3 +417,37 @@ export type ExportInput = z.infer<typeof ExportInputSchema>;
 
 export type GuideSearchInput = z.infer<typeof GuideSearchInputSchema>;
 export type GuideTutorialInput = z.infer<typeof GuideTutorialInputSchema>;
+
+// =============================================================================
+// Git Worktree Tool Schemas
+// =============================================================================
+
+export const GitCreateWorktreeInputSchema = z.object({
+  featureName: NonEmptyStringSchema.describe('Name of the feature (e.g., "auth", "api-refactor")'),
+  baseBranch: z.string().optional().default('main'),
+});
+
+export const GitListWorktreesInputSchema = z.object({
+  includeStale: z.boolean().optional().default(false),
+});
+
+export const GitSwitchWorktreeInputSchema = z.object({
+  featureName: NonEmptyStringSchema.describe('Name of the feature worktree to switch to'),
+});
+
+export const GitRemoveWorktreeInputSchema = z.object({
+  featureName: NonEmptyStringSchema.describe('Name of the feature worktree to remove'),
+  force: z.boolean().optional().default(false),
+  deleteBranch: z.boolean().optional().default(true),
+});
+
+export const GitCleanupStaleWorktreesInputSchema = z.object({
+  staleDays: PositiveIntSchema.optional().default(30),
+  dryRun: z.boolean().optional().default(true),
+});
+
+export type GitCreateWorktreeInput = z.infer<typeof GitCreateWorktreeInputSchema>;
+export type GitListWorktreesInput = z.infer<typeof GitListWorktreesInputSchema>;
+export type GitSwitchWorktreeInput = z.infer<typeof GitSwitchWorktreeInputSchema>;
+export type GitRemoveWorktreeInput = z.infer<typeof GitRemoveWorktreeInputSchema>;
+export type GitCleanupStaleWorktreesInput = z.infer<typeof GitCleanupStaleWorktreesInputSchema>;
