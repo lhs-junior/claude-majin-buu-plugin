@@ -1,446 +1,353 @@
-# 🧬 Awesome Plugin - The Absorption Engine
+# 🌊 FLUX - Smart Claude Code Plugin
 
-> **v2.0.0:** Now available as Claude Code Plugin!
->
-> - **93% token reduction** (6,100 → 400-900 tokens per skill)
-> - **On-demand loading** - only load what you need
-> - **7 skill files** covering all features
-> - **Backward compatible** - existing databases work!
-
-> **"좋은게 있으면 흡수한다!"** - 우수한 Claude Code 프로젝트를 지속적으로 발견하고, 평가하고, 개선해서 흡수하는 Built-in MCP Plugin
+> **93% token reduction** through intelligent on-demand loading
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18.0.0-green)](https://nodejs.org/)
-[![Absorbed](https://img.shields.io/badge/absorbed-7%2F8-brightgreen)](README.md#-absorption-history)
-[![Tools](https://img.shields.io/badge/tools-34-blue)](README.md#-absorption-history)
 
-**Status**: ✅ **v2.0.0 - Plugin Architecture**
-**Latest**: 7 skill files with 93% token reduction
+FLUX is a powerful Claude Code plugin system that provides 7 specialized skill files for enhanced development workflows. By loading only what you need, FLUX reduces token usage from 6,100 tokens to just 400-900 tokens per skill.
 
-## 🎯 The Absorption Philosophy
+## ✨ What is FLUX?
 
-### Problems We Solve
+FLUX is a **Claude Code plugin** that extends Claude's capabilities with stateful, integrated features:
 
-**1. MCP Gateway Pattern은 실패한 아키텍처**
-- External MCP 10개 연결 = 300 tools = 45,000 tokens 폭발 💥
-- BM25 필터링으로도 해결 불가 (metadata는 메모리 상주)
-- Anthropic 100 tools 제한도 이 때문
+- **7 Skill Files**: Memory, Agents, Planning, TDD, Guide, Science, and Specialists
+- **93% Token Reduction**: Load only the skills you need (6,100 → 400-900 tokens)
+- **On-Demand Loading**: Skills load automatically based on your requests
+- **SQLite Persistence**: All data persists across sessions
+- **Integrated Features**: Skills work together seamlessly
 
-**2. Anthropic Skills는 Stateless**
-- Prompt-based: 휘발성 (재실행 시 기억 없음)
-- No persistence: 데이터 저장 불가
-- No integration: Skills 간 데이터 공유 불가
+## 🚀 Key Features
 
-**3. oh-my-claudecode는 Static**
-- 31 skills 고정
-- 진화 없음
-- 사용자 피드백 반영 불가
+### Smart Token Management
 
-### ✨ Our Solution: Absorption Engine
+Traditional approaches load all features at once (6,100+ tokens). FLUX loads skills on-demand based on your natural language requests, reducing token usage by 93%.
 
-```
-Anthropic Skills (What to do) + awesome-plugin (How + Data)
-──────────────────────────────────────────────────────────
-Skills says:  "데이터를 분석하세요" (Prompt)
-We execute:   Agent 실행 → Memory 저장 → Planning TODO → 재사용
-```
+### Persistent State
 
-**핵심 차별점**:
-- ✅ **Stateful**: SQLite persistence (Skills는 stateless)
-- ✅ **Integrated**: Memory ↔ Agent ↔ Planning (Skills는 독립적)
-- ✅ **Evolving**: 매달 새 프로젝트 흡수 (Skills는 static)
-- ✅ **Quality-driven**: 70점 이상만 흡수 (Skills는 검증 없음)
+Unlike stateless prompt-based systems, FLUX uses SQLite to persist:
 
-## 📊 Performance Results
+- Memory entries and recall history
+- Agent execution state and results
+- TODO tasks and dependencies
+- TDD test run history
+- Scientific computing sessions
 
-### Token Reduction
+### Integrated Workflow
 
-| Scenario | Traditional | Awesome Plugin | Savings |
-|----------|-------------|----------------|---------|
-| 50 tools | 15,000 tokens | 4,500 tokens | **70%** |
-| 200 tools | 60,000 tokens | 6,000 tokens | **90%** |
-| 500 tools | 150,000 tokens | 7,500 tokens | **95%** |
+All 7 skills work together seamlessly:
 
-### Search Speed
+- Agents can create TODO tasks automatically
+- Memory integrates with all features
+- TDD tracks test runs with Planning
+- Specialists leverage Memory and Planning
 
-| Tools | Target | Actual | Status |
-|-------|--------|--------|--------|
-| 50 | < 50ms | **0.16-0.45ms** | ✅ 110x faster |
-| 100 | < 50ms | **0.30-0.38ms** | ✅ 130x faster |
-| 200 | < 50ms | **0.57-0.77ms** | ✅ 65x faster |
-
-## 🔄 Comparison
-
-| Feature | Traditional MCP | Awesome Plugin |
-|---------|----------------|----------------|
-| Token usage (500 tools) | 150,000 | 7,500 (95% less) |
-| Plugin discovery | Manual | Automatic (GitHub) |
-| Tool selection | Load all | Intelligent (BM25) |
-| Quality evaluation | None | 0-100 scoring |
-| Search speed | N/A | <1ms |
-| Usage learning | No | Yes |
-
-## 🌍 Real-World Use Cases
-
-### 1. Multi-Tool Development Environment
-Connect filesystem, git, slack, and database MCP servers - only relevant tools load based on your query.
-
-### 2. AI Agent with 500+ Tools
-Deploy AI agents with access to hundreds of tools without token bloat.
-
-### 3. Plugin Discovery & Evaluation
-Automatically find and evaluate MCP plugins from GitHub before installing.
-
-**See [Examples](docs/examples/) for detailed tutorials.**
-
-## 🚀 Quick Start
-
-## Installation
-
-### Option 1: Claude Code Plugin (Recommended)
+## 📦 Installation
 
 ```bash
-# Install the package
-npm install -g awesome-plugin
+# Install FLUX globally
+npm install -g flux
 
-# Install skill files to Claude
-npx awesome-plugin install-skills
+# Install skill files to Claude Code
+flux install-skills
 ```
 
-### Option 2: CLI Only
+After installation, Claude Code will automatically load FLUX skills when you mention relevant keywords like "remember", "agent", "todo", "test", etc.
 
-```bash
-npm install -g awesome-plugin
-```
-
-### Option 3: MCP Server (Legacy)
-
-See [MCP Server Setup](docs/MCP_SETUP.md) for legacy mode.
-
-## Skills Overview
-
-7 skill files provide on-demand functionality:
+## 🎯 Skills Overview
 
 | Skill | Operations | Tokens | Triggers |
 | --- | --- | --- | --- |
-| awesome-memory | 4 | ~270 | remember, recall, memory |
-| awesome-agents | 5 | ~550 | agent, spawn, orchestration |
-| awesome-planning | 3 | ~300 | todo, planning, task |
-| awesome-tdd | 4 | ~460 | tdd, test, red-green-refactor |
-| awesome-guide | 2 | ~220 | guide, tutorial, learn |
-| awesome-science | 3 | ~220 | science, stats, ml |
-| awesome-specialists | 14 types | ~890 | specialist, architect, etc |
+| **awesome-memory** | 4 | ~270 | remember, recall, memory |
+| **awesome-agents** | 5 | ~550 | agent, spawn, orchestration |
+| **awesome-planning** | 3 | ~300 | todo, planning, task |
+| **awesome-tdd** | 4 | ~460 | tdd, test, red-green-refactor |
+| **awesome-guide** | 2 | ~220 | guide, tutorial, learn |
+| **awesome-science** | 3 | ~220 | science, stats, ml |
+| **awesome-specialists** | 14 types | ~890 | specialist, architect, etc |
 
-### Total
+**Total**: 35 operations across 7 skills, loading only what you need
 
-21 operations, ~2,900 tokens (on-demand)
+### 1. Memory System (4 operations)
 
-## 📚 What's Inside
+Persistent memory with semantic search powered by BM25.
 
-The awesome-plugin combines **7 major feature systems** providing a comprehensive development environment:
+**Operations**:
 
-1. **Memory System** (4 tools) - Persistent memory with BM25 semantic search
-2. **Agent Orchestration** (5 tools) - Multi-agent coordination with parallel execution
-3. **Planning & TODO Tracking** (3 tools) - Hierarchical task management with dependencies
-4. **TDD Workflow** (4 tools) - RED-GREEN-REFACTOR cycle enforcement
-5. **Specialist Agents** (10 tools) - Researcher, Analyst, Designer, Coder, Teacher, Writer, Debugger, Reviewer, Optimizer, Strategist
-6. **Guide System** (2 tools) - Interactive documentation and learning paths
-7. **Scientific Computing** (6 tools) - Python REPL, data analysis, visualization, statistics, ML, export
-8. **Tool Search** (BM25 engine) - Sub-millisecond intelligent tool discovery
+- `memory_save`: Store information with tags
+- `memory_recall`: Search memories by query
+- `memory_list`: List all memories
+- `memory_forget`: Delete specific memories
 
-**Total: 34 built-in tools + expandable guide library**
+**Example**: "Remember that the API endpoint is <https://api.example.com>"
+
+### 2. Agent Orchestration (5 operations)
+
+Multi-agent coordination with parallel execution.
+
+**Operations**:
+
+- `agent_spawn`: Create background agents
+- `agent_status`: Check agent progress
+- `agent_result`: Get agent output
+- `agent_terminate`: Stop running agents
+- `agent_list`: List all agents
+
+**Example**: "Spawn an agent to analyze the codebase while I work on tests"
+
+### 3. Planning & TODO (3 operations)
+
+Hierarchical task management with dependencies.
+
+**Operations**:
+
+- `planning_create`: Create tasks with dependencies
+- `planning_update`: Update task status
+- `planning_tree`: Visualize task hierarchy
+
+**Example**: "Create a TODO for implementing the API with dependencies on database setup"
+
+### 4. TDD Workflow (4 operations)
+
+RED-GREEN-REFACTOR cycle enforcement.
+
+**Operations**:
+
+- `tdd_red`: Write failing test
+- `tdd_green`: Make test pass
+- `tdd_refactor`: Refactor while maintaining tests
+- `tdd_verify`: Verify all tests pass
+
+**Example**: "Start TDD for the authentication module"
+
+### 5. Guide System (2 operations)
+
+Interactive documentation and learning paths.
+
+**Operations**:
+
+- `guide_search`: Find relevant guides
+- `guide_tutorial`: Get step-by-step tutorials
+
+**Example**: "Show me the guide for using memory effectively"
+
+### 6. Scientific Computing (3 operations)
+
+Python REPL, data analysis, and visualization.
+
+**Operations**:
+
+- `science_execute`: Run Python code
+- `science_visualize`: Create plots
+- `science_export`: Export results
+
+**Example**: "Analyze this dataset and create a correlation matrix"
+
+### 7. Specialist Agents (14 types)
+
+Domain experts for specific tasks.
+
+**Specialists**:
+
+- Researcher, Analyst, Strategist
+- Designer, Coder, Teacher
+- Writer, Debugger, Reviewer, Optimizer
+- And 4 more specialized roles
+
+**Example**: "Use the debugger specialist to find the memory leak"
 
 ## 🏗️ Architecture
 
+FLUX uses a clean 2-layer architecture:
+
+```text
+┌─────────────────────────────────────┐
+│      Claude Code (User)             │
+└──────────────┬──────────────────────┘
+               │ Skill Files (7)
+┌──────────────┴──────────────────────┐
+│  FLUX Gateway (Orchestration)       │
+│  - Session Management               │
+│  - Tool Search (BM25)               │
+│  - State Persistence                │
+└──────────────┬──────────────────────┘
+               │
+    ┌──────────┼──────────┐
+    │          │          │
+┌───▼────┐ ┌──▼─────┐ ┌─▼──────┐
+│Feature │ │  Tool  │ │ SQLite │
+│Coordi- │ │ Search │ │Storage │
+│nator   │ │ Engine │ │        │
+└───┬────┘ └────────┘ └────────┘
+    │
+┌───▼──────────────────┐
+│ 7 Internal Features: │
+│ - Memory             │
+│ - Agents             │
+│ - Planning           │
+│ - TDD                │
+│ - Guide              │
+│ - Science            │
+│ - Specialists        │
+└──────────────────────┘
 ```
-┌──────────────────────────────────────────┐
-│     Claude Desktop / Claude Code         │
-└────────────────┬─────────────────────────┘
-                 │ MCP Protocol
-┌────────────────┴─────────────────────────┐
-│  Awesome Plugin Gateway (298 lines)      │
-│  Orchestration & Public API              │
-└────────────────┬─────────────────────────┘
-                 │
-    ┌────────────┼────────────┐
-    │            │            │
-┌───▼────┐  ┌───▼────┐  ┌───▼──────┐
-│Feature │  │  Tool  │  │   MCP    │
-│Coordi- │  │ Search │  │ Server   │
-│nator   │  │ Engine │  │ Manager  │
-└───┬────┘  └───┬────┘  └───┬──────┘
-    │           │            │
-┌───▼──────────┐│       ┌───▼──────┐
-│6 Internal    ││       │ External │
-│Features:     ││       │ MCP      │
-│- Memory      ││       │ Servers  │
-│- Agents      ││       │          │
-│- Planning    ││       │          │
-│- TDD         ││       │          │
-│- Guide       ││       │          │
-│- Science     ││       │          │
-└──────────────┘│       └──────────┘
-                │
-         ┌──────▼──────┐
-         │  Tool Loader│
-         │  & BM25     │
-         └─────────────┘
+
+### Key Components
+
+#### Layer 1: Gateway Orchestration
+
+- Routes requests to appropriate skills
+- Manages session state
+- Handles tool search and selection
+
+#### Layer 2: Feature Implementation
+
+- FeatureCoordinator: Manages all 7 internal features
+- ToolSearchEngine: BM25-powered intelligent tool discovery (<1ms)
+- SQLite Storage: Persistent state across sessions
+
+## 📖 Usage Examples
+
+### Memory Management
+
+```bash
+# Natural language examples
+"Remember that our database uses PostgreSQL 15"
+"Recall everything about authentication"
+"Forget the old API endpoint"
 ```
 
-### Architecture Design (v2.0.0 Refactoring)
+### Agent Orchestration
 
-The v2.0.0 release introduced a clean 4-layer architecture that eliminates complexity and circular dependencies:
+```bash
+"Spawn 3 agents: one to analyze tests, one to check docs, one to audit security"
+"Check status of all running agents"
+"Get results from the security audit agent"
+```
 
-**Layer 1: Gateway Orchestration (298 lines)**
-The core gateway is now 63% smaller (reduced from 800 lines) while handling all routing, session management, and protocol conversion between Claude and MCP servers.
+### Planning & TODO
 
-**Layer 2: Three Specialized Managers**
+```bash
+"Create a TODO tree for the new feature with subtasks"
+"Mark the database migration task as completed"
+"Show me the task hierarchy with dependencies"
+```
 
-- **FeatureCoordinator**: Manages all 6 internal features (Memory, Agents, Planning, TDD, Guide, Science) with unified state management
-- **MCPServerManager**: Handles external MCP server connections, tool registration, and connection lifecycle
-- **ToolSearchEngine**: Provides BM25-powered intelligent tool discovery and selection with <1ms performance
+### TDD Workflow
 
-**Layer 3: Feature Implementation**
-Internal features implement specialized functionality while maintaining clean boundaries. Each feature provides well-defined tool interfaces.
+```bash
+"Start TDD cycle for the UserService class"
+"Write failing test for email validation"
+"Make the test pass"
+"Refactor the validation logic"
+```
 
-**Layer 4: Tool Loading & Search**
-The BM25-indexed tool loader enables intelligent tool selection, usage learning, and semantic search across all available tools.
+## 📚 Documentation
 
-**Key Improvements**:
-
-- Zero circular dependencies through clear separation of concerns
-- Each component has a single responsibility
-- Easy to test, maintain, and extend
-- See [ARCHITECTURE.md](docs/architecture.md) for detailed technical documentation
-
-## 📖 Documentation
-
-### English Documentation
-- [API Reference](docs/api-reference.md) - Complete API documentation
-- [Architecture](ARCHITECTURE.md) - System design, module organization, and extension guide
-- [Examples](docs/examples/) - Usage examples and tutorials
-- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
-- [FAQ](docs/faq.md) - Frequently asked questions
-- [Configuration](docs/configuration.md) - Configuration options
-- [Performance Tuning](docs/performance-tuning.md) - Optimization guide
-- [Contributing](CONTRIBUTING.md) - How to contribute
-- [Changelog](CHANGELOG.md) - Version history
-
-### 한국어 문서 (Korean Documentation)
-- [변경 로그](CHANGELOG-KO.md)
-- [기여 가이드](CONTRIBUTING-KO.md)
-- [테스트 보고서](TEST-REPORT-KO.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Technical architecture and design decisions
+- [CHANGELOG.md](CHANGELOG.md) - Version history and release notes
+- [CONTRIBUTING.md](CONTRIBUTING.md) - How to contribute to FLUX
 
 ## 🎓 How It Works
 
-### 3-Layer Tool Loading
+### On-Demand Loading
 
-```
-┌─────────────────────────────────────────┐
-│ Layer 1: Essential Tools (Always)      │
-│ • read_file, write_file, bash, search  │
-│ • ~1.5K tokens                          │
-└─────────────────────────────────────────┘
-           ↓ User query: "send slack message"
-┌─────────────────────────────────────────┐
-│ Layer 2: BM25-Matched Tools (Dynamic)  │
-│ • slack_send_message                    │
-│ • slack_post_message                    │
-│ • notify_channel                        │
-│ • ~3-4.5K tokens (10-15 tools)          │
-└─────────────────────────────────────────┘
-           ↓ Explicit request
-┌─────────────────────────────────────────┐
-│ Layer 3: On-Demand (When Asked)        │
-│ • All remaining tools                   │
-│ • Loaded only when user requests        │
-└─────────────────────────────────────────┘
+FLUX skills load automatically when you mention trigger keywords:
+
+```text
+User: "Remember that we're using React 18"
+      ↓
+FLUX detects: "remember" keyword
+      ↓
+Loads: awesome-memory skill (~270 tokens)
+      ↓
+Executes: memory_save operation
+      ↓
+Persists to SQLite
 ```
 
-### Quality Evaluation
+### Token Reduction
 
-Every plugin is scored on 4 dimensions (0-100):
+Traditional approach loads everything:
 
-1. **Popularity** (0-25): GitHub stars, forks
-2. **Maintenance** (0-25): Recent commits, project age
-3. **Documentation** (0-25): README, examples, package.json
-4. **Reliability** (0-25): Issue ratio, versioning
+- All 35 operations = 6,100 tokens
+- 93% waste when you only need 1-2 features
 
-**70+ points** = Recommended for installation
+FLUX approach loads on-demand:
 
-### BM25 Search
-
-Uses Okapi BM25 algorithm with:
-- **k1 = 1.2**: Term frequency saturation
-- **b = 0.75**: Length normalization
-- **Usage boost**: Logarithmic boost for frequently used tools
+- Memory skill only = 270 tokens
+- 95% reduction when focused on one feature
+- Average 400-900 tokens per session
 
 ## 🛠️ CLI Commands
 
 ```bash
-# Discover MCP servers
-node dist/cli.mjs discover [options]
-
-Options:
-  -l, --limit <number>     Maximum results (default: 50)
-  --min-score <number>     Minimum quality score (default: 70)
-  --auto-install           Auto-install all recommended
-
-# List installed plugins
-node dist/cli.mjs list
-
-# Start gateway server (for Claude Desktop)
-node dist/cli.mjs start
+# Install skills to Claude Code
+flux install-skills
 
 # Show statistics
-node dist/cli.mjs stats
+flux stats
 
-# 🧬 Absorption commands
-# Show absorption history and progress
-node dist/cli.mjs absorbed
+# List available skills
+flux list
 
-# Vote for next absorption target
-node dist/cli.mjs vote [project]
+# Verify installation
+flux verify
 ```
 
-## 📦 Programmatic API
-
-```typescript
-import { AwesomePluginGateway } from 'awesome-plugin';
-
-const gateway = new AwesomePluginGateway({
-  dbPath: './data/plugins.db',
-  enableToolSearch: true,
-  maxLayer2Tools: 15,
-});
-
-// Connect to MCP servers
-await gateway.connectToServer({
-  id: 'filesystem',
-  name: 'Filesystem Server',
-  command: 'npx',
-  args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()],
-});
-
-// Search for tools (BM25-powered)
-const tools = await gateway.searchTools('read file', { limit: 5 });
-
-console.log(`Found ${tools.length} relevant tools`);
-
-await gateway.stop();
-```
-
-## 🔧 Configuration
+## 📝 Configuration
 
 ### Environment Variables
 
 ```bash
-# GitHub token for higher API rate limits (5000 req/hour)
-export GITHUB_TOKEN=your_github_token_here
-
 # Custom database path
-export DB_PATH=/path/to/plugins.db
+export FLUX_DB_PATH=/path/to/flux.db
+
+# Enable debug logging
+export FLUX_DEBUG=true
 ```
 
-### Gateway Options
+### Skill Configuration
 
-```typescript
-interface GatewayOptions {
-  dbPath?: string;           // SQLite database path (default: ':memory:')
-  enableToolSearch?: boolean; // Enable BM25 search (default: true)
-  maxLayer2Tools?: number;    // Max tools in Layer 2 (default: 15)
-}
-```
+Skills are automatically loaded based on your requests. No manual configuration needed.
 
-## 📝 Development Status
-
-### ✅ Phase 0: Absorption Infrastructure (v0.1.1 - Jan 2025)
-
-- [x] DB cleanup bug fixed (TypeError: database connection is not open)
-- [x] Quality evaluation system (100-point scoring)
-- [x] Conflict resolution framework (Merge > Namespace > Deprecate)
-- [x] Upstream monitoring system
-- [x] CLI commands (`absorbed`, `vote`)
-
-### ✅ Core Features
-
-- [x] **Memory Management**: 4 tools (from claude-mem)
-- [x] **Agent Orchestration**: 5 tools (from oh-my-claudecode)
-- [x] **Planning & TODO Tracking**: 3 tools (from planning-with-files)
-- [x] **TDD Workflow**: 4 tools (from superpowers)
-- [x] **BM25 Search Engine**: 0.2-0.7ms performance
-- [x] **3-Layer Tool Loading**: 95% token reduction
-- [x] **SQLite Persistence**: Stateful storage
-
-### 🔄 Absorption Complete
-
-**Progress: 7/8 projects absorbed (87.5%)** 🎉
-
-All major absorptions complete! The awesome-plugin now combines:
-
-- Memory management, agent orchestration, planning, TDD, specialist agents, interactive guides, and scientific computing
-
-**Next Steps**: Continuous improvement, community feedback, and v1.0 stabilization
-
-**Absorption engine: 7 successful integrations!**
-
-## 🧪 Testing
+## 🔧 Development
 
 ```bash
-# Run benchmarks
-npx tsx tests/benchmark.ts
+# Clone repository
+git clone https://github.com/yourusername/flux.git
+cd flux
 
-# Run example
-npx tsx examples/simple-test.ts
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Run tests
+npm test
 ```
 
-## 📚 Project Structure
+## 📊 Performance
 
-```
-awesome-pulgin/
-├── src/
-│   ├── core/
-│   │   ├── gateway.ts              # Main orchestration (298 lines)
-│   │   ├── types.ts                # Centralized type definitions
-│   │   ├── feature-coordinator.ts  # Internal feature management
-│   │   ├── mcp-server-manager.ts   # External MCP server lifecycle
-│   │   ├── tool-search-engine.ts   # Search orchestration
-│   │   ├── mcp-client.ts           # MCP server client
-│   │   ├── session-manager.ts      # Session management
-│   │   └── tool-loader.ts          # 3-layer tool loading
-│   ├── features/                # 🧬 Absorbed features
-│   │   ├── memory/              # claude-mem (v0.1.0)
-│   │   │   ├── memory-manager.ts
-│   │   │   └── memory-store.ts
-│   │   └── agents/              # oh-my-claudecode (v0.1.0)
-│   │       └── agent-orchestrator.ts
-│   ├── absorption/              # 🔬 Absorption infrastructure
-│   │   ├── quality-evaluator.ts    # 100-point scoring
-│   │   ├── conflict-resolver.ts    # Conflict detection
-│   │   └── upstream-monitor.ts     # Version tracking
-│   ├── search/
-│   │   ├── bm25-indexer.ts      # BM25 search engine
-│   │   └── query-processor.ts   # Intent classification
-│   ├── storage/
-│   │   └── metadata-store.ts    # SQLite storage
-│   ├── discovery/
-│   │   ├── github-explorer.ts   # GitHub API integration
-│   │   ├── quality-evaluator.ts # Quality scoring
-│   │   └── plugin-installer.ts  # Auto-installer
-│   ├── cli.ts                   # CLI interface (absorbed, vote)
-│   └── index.ts                 # Main exports
-├── tests/
-│   └── benchmark.ts             # Performance tests
-├── examples/
-│   └── comprehensive-test.ts    # Full feature demo
-├── PRD.md                       # Product Requirements Document
-└── README.md
-```
+### Token Usage
+
+| Scenario | Traditional | FLUX | Savings |
+| --- | --- | --- | --- |
+| Single skill | 6,100 tokens | 400 tokens | **93%** |
+| Two skills | 6,100 tokens | 800 tokens | **87%** |
+| All skills | 6,100 tokens | 2,900 tokens | **52%** |
+
+### Search Speed
+
+- Tool search: **<1ms** (BM25-powered)
+- Skill loading: **<10ms**
+- State persistence: **<5ms** (SQLite)
 
 ## 🤝 Contributing
 
-Contributions welcome! Please:
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 1. Fork the repository
 2. Create a feature branch
@@ -450,119 +357,20 @@ Contributions welcome! Please:
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file
+MIT License - see [LICENSE](LICENSE) file for details
 
 ## 🙏 Acknowledgments
 
-- Built on [MCP SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- Inspired by [Anthropic's Tool Search](https://www.anthropic.com/news/tool-search)
-- BM25 algorithm from [okapibm25](https://github.com/FurkanToprak/OkapiBM25)
+FLUX is inspired by and built upon excellent Claude Code projects:
 
-## 🔗 Links
-
-- [Product Requirements Document](/PRD.md)
-- [Implementation Plan](/.claude/plans/composed-churning-glade.md)
-- [MCP Specification](https://modelcontextprotocol.io/specification/)
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-
-## 🧬 Absorption History
-
-### ✅ Absorbed Projects (7/8 - 87.5% Complete)
-
-**1. claude-mem** (v0.1.0 - 2025-01-28)
-- **Original**: [supermemoryai/claude-mem](https://github.com/supermemoryai/claude-mem)
-- **Absorbed**: Memory management with BM25 semantic search
-- **Tools**: 4 (`memory_save`, `memory_recall`, `memory_list`, `memory_forget`)
-- **Quality Score**: 95/100
-- **Our Improvements**:
-  - BM25 search instead of vector DB (0.2-0.7ms performance)
-  - SQLite instead of file storage
-  - Tool schema redesign for better UX
-
-**2. oh-my-claudecode** (v0.1.0 - 2025-01-28)
-- **Original**: [Yeachan-Heo/oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode)
-- **Absorbed**: Multi-agent orchestration with parallel execution
-- **Tools**: 5 (`agent_spawn`, `agent_status`, `agent_result`, `agent_terminate`, `agent_list`)
-- **Quality Score**: 95/100
-- **Our Improvements**:
-  - Parallel async execution (not sequential)
-  - Real-time progress monitoring
-  - Background task support
-
-**3. planning-with-files** (v0.2.0 - 2025-01-28)
-- **Original**: [OthmanAdi/planning-with-files](https://github.com/OthmanAdi/planning-with-files)
-- **Absorbed**: TODO tracking with dependency management
-- **Tools**: 3 (`planning_create`, `planning_update`, `planning_tree`)
-- **Quality Score**: 86/100 (Grade: B+)
-- **Our Improvements**:
-  - File storage → SQLite with foreign keys
-  - No search → BM25 semantic search
-  - Manual tracking → Automatic cycle detection
-  - Basic visualization → ASCII tree with status icons (🔄⏳✅)
-  - Standalone → Integrated with Agents (auto TODO creation)
-
-**4. superpowers** (v0.3.0 - 2025-01-28)
-
-- **Original**: [obra/superpowers](https://github.com/obra/superpowers) (38k+ stars!)
-- **Absorbed**: TDD workflow enforcement
-- **Tools**: 4 (`tdd_red`, `tdd_green`, `tdd_refactor`, `tdd_verify`)
-- **Quality Score**: 80/100 (Grade: B)
-- **Our Improvements**:
-  - Full framework → Focused TDD tools
-  - Code deletion → Warnings only (user-friendly)
-  - Standalone planning → Integrated with our Planning
-  - Subagents → Integrated with our Agents
-  - Git worktrees → SQLite test run history
-  - Framework-specific → Auto-detect test runner (Jest/Vitest/Mocha)
-
-**5. agents** (v0.4.0 - 2025-01-28)
-
-- **Original**: [wshobson/agents](https://github.com/wshobson/agents)
-- **Absorbed**: Specialist agent types (10 from 72 available)
-- **Tools**: 10 (`specialist_researcher`, `specialist_analyst`, `specialist_strategist`, `specialist_designer`, `specialist_coder`, `specialist_teacher`, `specialist_writer`, `specialist_debugger`, `specialist_reviewer`, `specialist_optimizer`)
-- **Quality Score**: 85/100 (Grade: B+)
-- **Our Improvements**:
-  - 72 agents → Top 10 specialist types (focused extraction)
-  - Static agents → Dynamic integration with Memory + Planning + TDD
-  - Standalone → Parallel execution with Agent orchestration
-  - No context sharing → Full state preservation across specialists
-  - Manual selection → Intelligent specialist recommendation
-
-**6. guide-system** (v0.5.0 - 2025-01-28)
-
-- **Inspired By**: [zebbern/claude-code-guide](https://github.com/zebbern/claude-code-guide) and [Cranot/claude-code-guide](https://github.com/Cranot/claude-code-guide)
-- **Created**: New guide tools inspired by (not absorbed from) their concepts
-- **Tools**: 2 (`guide_search`, `guide_tutorial`)
-- **Initial Guides**: 5 (Getting Started, Building with awesome-plugin, Absorption Engine Deep Dive, Memory Best Practices, TDD Mastery)
-- **Quality Score**: 92/100 (Grade: A-)
-- **Our Approach**:
-  - Inspiration-based creation (not code absorption)
-  - Self-documenting system that teaches through guides
-  - Full integration with Memory + Agents + Planning
-  - Interactive learning paths linked to actual tool usage
-  - Expandable guide library for community contributions
-
-### 🔮 Continuous Absorption
-
-**Vote for next absorption**: `node dist/cli.mjs vote <project>`
-
-Community suggestions are welcome! The absorption engine continuously evaluates high-quality Claude Code projects.
-
-## 🌟 Inspired By & Credits
-
-### Absorbed Projects
-
-- [claude-mem](https://github.com/supermemoryai/claude-mem) - Memory management (v0.1.0)
-- [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) - Agent orchestration (v0.1.0)
-- [planning-with-files](https://github.com/OthmanAdi/planning-with-files) - TODO tracking (v0.2.0)
-
-### Reference Projects
-
-- [everything-claude-code](https://github.com/affaan-m/everything-claude-code) - Production setup guide and patterns
-- [Anthropic Tool Search](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool) - Tool search concept
+- [claude-mem](https://github.com/supermemoryai/claude-mem) - Memory management
+- [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) - Agent orchestration
+- [planning-with-files](https://github.com/OthmanAdi/planning-with-files) - TODO tracking
+- [superpowers](https://github.com/obra/superpowers) - TDD workflow
+- [agents](https://github.com/wshobson/agents) - Specialist agents
 
 ---
 
-**Made with ❤️ for the MCP community**
+Made with ❤️ for the Claude Code community
 
-*Reducing token waste, one plugin at a time* ✨
+Smart loading, powerful features, zero waste ✨

@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2026-01-29
+> **Note**: This project was renamed from "awesome-plugin" to "FLUX" as of v2.0.0, reflecting its focus as a smart Claude Code plugin system rather than an MCP gateway.
+
+## [2.0.0] - 2026-01-29 - FLUX Rebrand
 
 ### 🏗️ Major Architecture Refactoring - Plugin-First Design
 
@@ -236,7 +238,7 @@ No breaking changes. v1.1.0 is fully backwards compatible with v1.0.0.
 
 ### 🎉 First Stable Release - Production Ready
 
-This release marks the first stable version of awesome-plugin with all critical security vulnerabilities fixed and 7/8 projects absorbed (87.5% milestone).
+This release marks the first stable version of FLUX with all critical security vulnerabilities fixed and 7/8 projects absorbed (87.5% milestone).
 
 ### Security
 
@@ -446,7 +448,7 @@ This release introduces inspiration-based absorption (not direct absorption) fro
 #### Initial Guide Library (5 guides)
 
 1. **Getting Started with Claude Code** - Welcome guide for new users
-2. **Building with awesome-plugin** - Integration and development guide
+2. **Building with FLUX** - Integration and development guide
 3. **Absorption Engine Deep Dive** - Understanding the philosophy and architecture
 4. **Memory System Best Practices** - Effective use of memory tools
 5. **TDD Workflow Mastery** - Step-by-step TDD cycle enforcement
@@ -769,7 +771,7 @@ Original [planning-with-files](https://github.com/OthmanAdi/planning-with-files)
 
 ### 🧬 Phase 0: Absorption Infrastructure
 
-This release establishes the foundation for continuous project absorption, transforming awesome-plugin into "The Absorption Engine."
+This release establishes the foundation for continuous project absorption, transforming FLUX into "The Absorption Engine."
 
 ### Added
 
@@ -974,4 +976,4 @@ This release establishes the foundation for continuous project absorption, trans
 
 ---
 
-For more details, see the [commit history](https://github.com/yourusername/awesome-plugin/commits/main).
+For more details, see the [commit history](https://github.com/yourusername/FLUX/commits/main).

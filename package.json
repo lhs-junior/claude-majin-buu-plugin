@@ -1,11 +1,11 @@
 {
-  "name": "awesome-plugin",
+  "name": "flux",
   "version": "2.0.0",
-  "description": "Awesome MCP Meta Plugin - Intelligent tool selection and auto-discovery for MCP servers",
+  "description": "FLUX: Smart Claude Code plugin with 93% token reduction via intelligent on-demand loading",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
   "bin": {
-    "awesome-plugin": "./dist/cli.mjs"
+    "flux": "./dist/cli.mjs"
   },
   "scripts": {
     "build": "tsup",
@@ -27,7 +27,7 @@
     "bm25",
     "search"
   ],
-  "author": "",
+  "author": "hyunsoo Lee <da48688@naver.com>",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
@@ -55,9 +55,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/awesome-plugin.git"
+    "url": "https://github.com/lhs-junior/flux.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/awesome-plugin/issues"
+    "url": "https://github.com/lhs-junior/flux/issues"
   }
 }
