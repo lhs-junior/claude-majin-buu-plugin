@@ -2,12 +2,26 @@ import { randomUUID } from 'crypto';
 import { spawn } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { TDDStore, TDDTestRun } from './tdd-store.js';
-import type { ToolDefinition } from '../../types.js';
+import type { ToolMetadata } from '../../core/gateway.js';
+import {
+  TDDRedInputSchema,
+  TDDGreenInputSchema,
+  TDDRefactorInputSchema,
+  TDDVerifyInputSchema,
+  validateInput,
+  type TDDRedInput,
+  type TDDGreenInput,
+  type TDDRefactorInput,
+  type TDDVerifyInput,
+} from '../../validation/schemas.js';
 
 /**
  * Test runner type
  */
 type TestRunner = 'jest' | 'vitest' | 'mocha' | 'unknown';
+
+// Re-export types for backwards compatibility
+export type { TDDRedInput, TDDGreenInput, TDDRefactorInput, TDDVerifyInput };
 
 /**
  * TDD Feature Manager
@@ -26,7 +40,7 @@ export class TDDManager {
   /**
    * Get tool definitions for MCP
    */
-  getToolDefinitions(): ToolDefinition[] {
+  getToolDefinitions(): ToolMetadata[] {
     return [
       {
         name: 'tdd_red',
@@ -107,18 +121,38 @@ export class TDDManager {
   }
 
   /**
-   * Handle tool calls
+   * Handle tool calls with Zod validation
    */
-  async handleToolCall(toolName: string, args: any): Promise<any> {
+  async handleToolCall(toolName: string, args: unknown): Promise<unknown> {
     switch (toolName) {
-      case 'tdd_red':
-        return this.red(args.testPath, args.description);
-      case 'tdd_green':
-        return this.green(args.testPath, args.implementationPath);
-      case 'tdd_refactor':
-        return this.refactor(args.filePath);
-      case 'tdd_verify':
-        return this.verify(args.minCoverage);
+      case 'tdd_red': {
+        const validation = validateInput(TDDRedInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.red(validation.data!.testPath, validation.data!.description);
+      }
+      case 'tdd_green': {
+        const validation = validateInput(TDDGreenInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.green(validation.data!.testPath, validation.data!.implementationPath);
+      }
+      case 'tdd_refactor': {
+        const validation = validateInput(TDDRefactorInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.refactor(validation.data!.filePath);
+      }
+      case 'tdd_verify': {
+        const validation = validateInput(TDDVerifyInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.verify(validation.data!.minCoverage);
+      }
       default:
         throw new Error(`Unknown TDD tool: ${toolName}`);
     }
@@ -568,7 +602,7 @@ export class TDDManager {
     } else {
       // Try to parse failed count
       const failedMatch = result.output.match(/(\d+) failed/i);
-      const testsFailed = failedMatch ? parseInt(failedMatch[1]) : testsRun;
+      const testsFailed = failedMatch ? parseInt(failedMatch[1] ?? '0') : testsRun;
 
       return {
         success: false,
@@ -594,7 +628,7 @@ export class TDDManager {
     for (const pattern of patterns) {
       const match = output.match(pattern);
       if (match) {
-        return parseInt(match[1]);
+        return parseInt(match[1] ?? '0');
       }
     }
 
@@ -616,7 +650,7 @@ export class TDDManager {
     for (const pattern of patterns) {
       const match = output.match(pattern);
       if (match) {
-        return parseFloat(match[1]);
+        return parseFloat(match[1] ?? '0');
       }
     }
 

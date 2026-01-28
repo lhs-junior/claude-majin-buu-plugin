@@ -1,4 +1,5 @@
 import { Octokit } from '@octokit/rest';
+import logger from '../utils/logger.js';
 
 export interface GitHubRepoInfo {
   owner: string;
@@ -73,12 +74,12 @@ export class GitHubExplorer {
     if (this.enableCache) {
       const cached = this.getFromCache(cacheKey);
       if (cached) {
-        console.log('Returning cached results');
+        logger.info('Returning cached results');
         return cached;
       }
     }
 
-    console.log('Searching GitHub for MCP servers...');
+    logger.info('Searching GitHub for MCP servers...');
 
     const results: GitHubRepoInfo[] = [];
 
@@ -121,7 +122,7 @@ export class GitHubExplorer {
       this.addToCache(cacheKey, enrichedResults);
     }
 
-    console.log(`Found ${enrichedResults.length} unique MCP server repositories`);
+    logger.info(`Found ${enrichedResults.length} unique MCP server repositories`);
 
     return enrichedResults;
   }
@@ -197,7 +198,7 @@ export class GitHubExplorer {
         url: data.html_url,
       };
     } catch (error) {
-      console.error(`Failed to get repo info for ${owner}/${repo}:`, error);
+      logger.error(`Failed to get repo info for ${owner}/${repo}:`, error);
       return null;
     }
   }
@@ -252,9 +253,9 @@ export class GitHubExplorer {
       }));
     } catch (error: any) {
       if (error.status === 403) {
-        console.error('GitHub API rate limit exceeded. Please provide a GITHUB_TOKEN or wait.');
+        logger.error('GitHub API rate limit exceeded. Please provide a GITHUB_TOKEN or wait.');
       } else {
-        console.error('GitHub search error:', error.message);
+        logger.error('GitHub search error:', error.message);
       }
       return [];
     }
@@ -264,7 +265,7 @@ export class GitHubExplorer {
    * Enrich repository information with additional metadata
    */
   private async enrichRepoInfo(repos: GitHubRepoInfo[]): Promise<GitHubRepoInfo[]> {
-    console.log(`Enriching ${repos.length} repositories with additional metadata...`);
+    logger.info(`Enriching ${repos.length} repositories with additional metadata...`);
 
     const enriched: GitHubRepoInfo[] = [];
 

@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'crypto';
+import type { DatabaseRow, SqlParam } from '../../types/database.js';
 
 export interface TodoRecord {
   id: string;
@@ -195,7 +196,7 @@ export class PlanningStore {
    */
   list(filter?: TodoFilter): TodoRecord[] {
     let query = 'SELECT * FROM todos WHERE 1=1';
-    const params: any[] = [];
+    const params: SqlParam[] = [];
 
     if (filter?.status) {
       query += ' AND status = ?';
@@ -224,7 +225,7 @@ export class PlanningStore {
     }
 
     const stmt = this.db.prepare(query);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params) as DatabaseRow[];
 
     let todos = rows.map((row) => this.rowToRecord(row));
 
@@ -307,19 +308,19 @@ export class PlanningStore {
   /**
    * Convert database row to TodoRecord
    */
-  private rowToRecord(row: any): TodoRecord {
+  private rowToRecord(row: DatabaseRow): TodoRecord {
     return {
-      id: row.id,
-      parentId: row.parent_id,
-      content: row.content,
-      status: row.status,
-      type: row.type || 'todo',
-      tddStatus: row.tdd_status || undefined,
-      testPath: row.test_path || undefined,
-      tags: JSON.parse(row.tags || '[]'),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      completedAt: row.completed_at,
+      id: String(row.id),
+      parentId: row.parent_id !== null ? String(row.parent_id) : null,
+      content: String(row.content),
+      status: row.status as 'pending' | 'in_progress' | 'completed',
+      type: (row.type as 'todo' | 'tdd' | undefined) || 'todo',
+      tddStatus: row.tdd_status as 'red' | 'green' | 'refactored' | undefined || undefined,
+      testPath: row.test_path ? String(row.test_path) : undefined,
+      tags: JSON.parse(String(row.tags || '[]')),
+      createdAt: Number(row.created_at),
+      updatedAt: Number(row.updated_at),
+      completedAt: row.completed_at !== null ? Number(row.completed_at) : null,
     };
   }
 

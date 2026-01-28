@@ -1,35 +1,26 @@
 import { MemoryStore, MemoryRecord, MemoryFilter } from './memory-store.js';
 import { BM25Indexer } from '../../search/bm25-indexer.js';
 import type { ToolMetadata } from '../../core/gateway.js';
+import {
+  MemorySaveInputSchema,
+  MemoryRecallInputSchema,
+  MemoryListInputSchema,
+  MemoryForgetInputSchema,
+  validateInput,
+  type MemorySaveInput,
+  type MemoryRecallInput,
+  type MemoryListInput,
+  type MemoryForgetInput,
+} from '../../validation/schemas.js';
+import logger from '../../utils/logger.js';
 
-export interface MemorySaveInput {
-  key: string;
-  value: string;
-  metadata?: {
-    tags?: string[];
-    category?: string;
-    expiresAt?: number;
-  };
-}
-
-export interface MemoryRecallInput {
-  query: string;
-  limit?: number;
-  category?: string;
-}
-
-export interface MemoryListInput {
-  filter?: {
-    category?: string;
-    tags?: string[];
-    since?: number;
-  };
-  limit?: number;
-}
-
-export interface MemoryForgetInput {
-  id: string;
-}
+// Re-export types for backwards compatibility
+export type {
+  MemorySaveInput,
+  MemoryRecallInput,
+  MemoryListInput,
+  MemoryForgetInput,
+};
 
 export class MemoryManager {
   private store: MemoryStore;
@@ -47,7 +38,7 @@ export class MemoryManager {
     this.cleanupInterval = setInterval(() => {
       const cleaned = this.store.cleanupExpired();
       if (cleaned > 0) {
-        console.log(`Cleaned up ${cleaned} expired memories`);
+        logger.debug(`Cleaned up ${cleaned} expired memories`);
         this.reindexAll();
       }
     }, 60 * 60 * 1000);
@@ -75,9 +66,10 @@ export class MemoryManager {
         id: memory.id,
         memory,
       };
-    } catch (error: any) {
-      console.error('Failed to save memory:', error);
-      throw new Error(`Failed to save memory: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error('Failed to save memory:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to save memory: ${message}`);
     }
   }
 
@@ -133,9 +125,10 @@ export class MemoryManager {
         .filter((r) => r !== null);
 
       return { results };
-    } catch (error: any) {
-      console.error('Failed to recall memories:', error);
-      throw new Error(`Failed to recall memories: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error('Failed to recall memories:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to recall memories: ${message}`);
     }
   }
 
@@ -176,9 +169,10 @@ export class MemoryManager {
           },
         })),
       };
-    } catch (error: any) {
-      console.error('Failed to list memories:', error);
-      throw new Error(`Failed to list memories: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error('Failed to list memories:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to list memories: ${message}`);
     }
   }
 
@@ -195,9 +189,10 @@ export class MemoryManager {
       }
 
       return { success };
-    } catch (error: any) {
-      console.error('Failed to forget memory:', error);
-      throw new Error(`Failed to forget memory: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error('Failed to forget memory:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to forget memory: ${message}`);
     }
   }
 
@@ -368,21 +363,41 @@ export class MemoryManager {
   }
 
   /**
-   * Handle tool calls (for Gateway integration)
+   * Handle tool calls (for Gateway integration) with Zod validation
    */
-  async handleToolCall(toolName: string, args: unknown): Promise<any> {
+  async handleToolCall(toolName: string, args: unknown): Promise<unknown> {
     switch (toolName) {
-      case 'memory_save':
-        return this.save(args as MemorySaveInput);
+      case 'memory_save': {
+        const validation = validateInput(MemorySaveInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.save(validation.data!);
+      }
 
-      case 'memory_recall':
-        return this.recall(args as MemoryRecallInput);
+      case 'memory_recall': {
+        const validation = validateInput(MemoryRecallInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.recall(validation.data!);
+      }
 
-      case 'memory_list':
-        return this.list(args as MemoryListInput);
+      case 'memory_list': {
+        const validation = validateInput(MemoryListInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.list(validation.data!);
+      }
 
-      case 'memory_forget':
-        return this.forget(args as MemoryForgetInput);
+      case 'memory_forget': {
+        const validation = validateInput(MemoryForgetInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.forget(validation.data!);
+      }
 
       default:
         throw new Error(`Unknown memory tool: ${toolName}`);
@@ -398,6 +413,9 @@ export class MemoryManager {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
     }
+
+    // Clear indexer to free memory and remove document references
+    this.indexer.clear();
 
     // Close database
     this.store.close();

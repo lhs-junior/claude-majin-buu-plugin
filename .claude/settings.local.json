@@ -34,7 +34,9 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: v0.2.0 - First absorption: planning-with-files\n\nThis release marks our first project absorption! We''ve absorbed planning-with-files with significant improvements.\n\nNew Features:\n- Planning & TODO Tracking \\(3 new tools\\):\n  * planning_create: Create TODO items with parent-child dependencies\n  * planning_update: Update TODO status and content\n  * planning_tree: Visualize dependency tree with ASCII art\n\n- Absorption Infrastructure:\n  * QualityEvaluator: 100-point scoring system \\(planning-with-files: 86/100, Grade B+\\)\n  * ConflictResolver: Systematic conflict detection and resolution\n  * UpstreamMonitor: Continuous monitoring of absorbed projects\n\n- PlanningStore: SQLite-based persistence layer\n  * Parent-child relationships with foreign keys\n  * CASCADE delete \\(removing parent removes children\\)\n  * Circular dependency prevention\n  * Efficient indexing on status, parent_id, created_at\n\n- Synergy Features:\n  * Agent → Planning integration \\(agents can create TODOs\\)\n  * Memory ↔ Planning \\(TODOs indexed in BM25 search\\)\n  * Automatic TODO indexing for semantic search\n\nOur Improvements Over Original:\n- Storage: File-based JSON → SQLite with transactions\n- Search: None → BM25 semantic search\n- Integration: Standalone → Integrated with Memory & Agents\n- Dependencies: Manual tracking → Foreign keys + cycle detection\n- Tree visualization: Basic → ASCII art with status icons \\(🔄⏳✅\\)\n\nStatistics:\n- Total Tools: 12 \\(4 memory + 5 agent + 3 planning\\)\n- Absorbed Projects: 3/8 \\(37.5% complete\\)\n- Quality Score Average: 90.7/100\n\nDocumentation:\n- Added PRD.md with complete absorption strategy\n- Updated README.md with absorption history\n- CLI `absorbed` and `vote` commands for user engagement\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(curl:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(git tag:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

@@ -1,33 +1,23 @@
 import { PlanningStore, TodoRecord, TodoFilter } from './planning-store.js';
 import { BM25Indexer } from '../../search/bm25-indexer.js';
 import type { ToolMetadata } from '../../core/gateway.js';
+import {
+  PlanningCreateInputSchema,
+  PlanningUpdateInputSchema,
+  PlanningTreeInputSchema,
+  validateInput,
+  type PlanningCreateInput,
+  type PlanningUpdateInput,
+  type PlanningTreeInput,
+} from '../../validation/schemas.js';
+import logger from '../../utils/logger.js';
 
-export interface PlanningCreateInput {
-  content: string;
-  parentId?: string;
-  tags?: string[];
-  status?: 'pending' | 'in_progress' | 'completed';
-  type?: 'todo' | 'tdd'; // NEW: Task type
-  tddStatus?: 'red' | 'green' | 'refactored'; // NEW: TDD cycle phase
-  testPath?: string; // NEW: Path to test file
-}
-
-export interface PlanningUpdateInput {
-  id: string;
-  content?: string;
-  status?: 'pending' | 'in_progress' | 'completed';
-  tags?: string[];
-  parentId?: string;
-  tddStatus?: 'red' | 'green' | 'refactored'; // NEW: Update TDD status
-  testPath?: string; // NEW: Update test path
-}
-
-export interface PlanningTreeInput {
-  filter?: {
-    status?: 'pending' | 'in_progress' | 'completed';
-    rootOnly?: boolean;
-  };
-}
+// Re-export types for backwards compatibility
+export type {
+  PlanningCreateInput,
+  PlanningUpdateInput,
+  PlanningTreeInput,
+};
 
 export class PlanningManager {
   private store: PlanningStore;
@@ -72,9 +62,10 @@ export class PlanningManager {
         success: true,
         todo,
       };
-    } catch (error: any) {
-      console.error('Failed to create TODO:', error);
-      throw new Error(`Failed to create TODO: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error('Failed to create TODO:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to create TODO: ${message}`);
     }
   }
 
@@ -86,11 +77,13 @@ export class PlanningManager {
     todo: TodoRecord | null;
   } {
     try {
+      // Convert null to undefined for parentId (null means "clear parent")
+      const parentId = input.parentId === null ? undefined : input.parentId;
       const todo = this.store.update(input.id, {
         content: input.content,
         status: input.status,
         tags: input.tags,
-        parentId: input.parentId,
+        parentId,
         tddStatus: input.tddStatus,
         testPath: input.testPath,
       });
@@ -112,9 +105,10 @@ export class PlanningManager {
         success: !!todo,
         todo,
       };
-    } catch (error: any) {
-      console.error('Failed to update TODO:', error);
-      throw new Error(`Failed to update TODO: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error('Failed to update TODO:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to update TODO: ${message}`);
     }
   }
 
@@ -175,9 +169,10 @@ export class PlanningManager {
         tree: lines.join('\n'),
         summary,
       };
-    } catch (error: any) {
-      console.error('Failed to generate tree:', error);
-      throw new Error(`Failed to generate tree: ${error.message}`);
+    } catch (error: unknown) {
+      logger.error('Failed to generate tree:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to generate tree: ${message}`);
     }
   }
 
@@ -418,18 +413,34 @@ export class PlanningManager {
   }
 
   /**
-   * Handle tool calls (for Gateway integration)
+   * Handle tool calls (for Gateway integration) with Zod validation
    */
-  async handleToolCall(toolName: string, args: unknown): Promise<any> {
+  async handleToolCall(toolName: string, args: unknown): Promise<unknown> {
     switch (toolName) {
-      case 'planning_create':
-        return this.create(args as PlanningCreateInput);
+      case 'planning_create': {
+        const validation = validateInput(PlanningCreateInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        // The schema has a default value for status, so it's always defined
+        return this.create(validation.data as PlanningCreateInput);
+      }
 
-      case 'planning_update':
-        return this.update(args as PlanningUpdateInput);
+      case 'planning_update': {
+        const validation = validateInput(PlanningUpdateInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.update(validation.data!);
+      }
 
-      case 'planning_tree':
-        return this.tree(args as PlanningTreeInput);
+      case 'planning_tree': {
+        const validation = validateInput(PlanningTreeInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.tree(validation.data!);
+      }
 
       default:
         throw new Error(`Unknown planning tool: ${toolName}`);

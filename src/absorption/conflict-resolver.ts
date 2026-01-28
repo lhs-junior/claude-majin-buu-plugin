@@ -182,7 +182,10 @@ export class ConflictResolver {
     // Medium conflicts → Namespace
     const mediumConflicts = conflicts.filter((c) => c.severity === 'medium');
     if (mediumConflicts.length > 0) {
-      return this.createNamespaceStrategy(mediumConflicts[0], incomingTools);
+      const mediumConflict = mediumConflicts[0];
+      if (mediumConflict) {
+        return this.createNamespaceStrategy(mediumConflict, incomingTools);
+      }
     }
 
     // Low conflicts → Merge (architecture 차이는 무시)
@@ -333,7 +336,7 @@ ${incomingTools.map((t) => `  - ${t.name} → ${domain}_${t.name.split('_').slic
    */
   private extractAction(toolName: string): string {
     const parts = toolName.split('_');
-    return parts[parts.length - 1]; // create, update, delete, list, etc.
+    return parts[parts.length - 1] ?? 'unknown'; // create, update, delete, list, etc.
   }
 
   /**

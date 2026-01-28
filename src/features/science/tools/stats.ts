@@ -2,26 +2,18 @@ import { spawn } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { ToolMetadata } from '../../../core/gateway.js';
+import type { MemoryManager } from '../../memory/memory-manager.js';
+import {
+  StatsTestInputSchema,
+  validateInput,
+  type StatsTestInput,
+} from '../../../validation/schemas.js';
+import logger from '../../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export interface StatsTestInput {
-  test: 'ttest' | 'anova' | 'chi_square' | 'correlation' | 'regression' | 'mann_whitney';
-  data: {
-    group1?: number[];
-    group2?: number[];
-    groups?: number[][];
-    observed?: number[][];
-    x?: number[];
-    y?: number[];
-    mu?: number;
-    alternative?: 'two-sided' | 'less' | 'greater';
-    method?: 'pearson' | 'spearman';
-  };
-  save_to_memory?: boolean;
-  memory_key?: string;
-}
+export type { StatsTestInput };
 
 export interface StatsTestResult {
   success: boolean;
@@ -80,10 +72,11 @@ async function executePythonStats(input: StatsTestInput): Promise<StatsTestResul
       try {
         const result = JSON.parse(stdout);
         resolve(result);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
         resolve({
           success: false,
-          error: `Failed to parse Python output: ${error.message}`,
+          error: `Failed to parse Python output: ${message}`,
         });
       }
     });
@@ -104,10 +97,11 @@ async function executePythonStats(input: StatsTestInput): Promise<StatsTestResul
     try {
       python.stdin.write(JSON.stringify(inputData));
       python.stdin.end();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       resolve({
         success: false,
-        error: `Failed to write to Python stdin: ${error.message}`,
+        error: `Failed to write to Python stdin: ${message}`,
       });
     }
   });
@@ -145,12 +139,13 @@ function formatStatsForMemory(test: string, result: StatsTestResult): string {
  * Perform statistical tests
  */
 export async function scienceStats(
-  input: StatsTestInput,
-  memoryManager?: any
+  input: unknown,
+  memoryManager?: MemoryManager
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
-    // Validate input
-    if (!input.test) {
+    // Validate input using Zod schema
+    const validation = validateInput(StatsTestInputSchema, input);
+    if (!validation.success) {
       return {
         content: [
           {
@@ -158,7 +153,7 @@ export async function scienceStats(
             text: JSON.stringify(
               {
                 success: false,
-                error: 'Missing required parameter: test',
+                error: validation.error,
               },
               null,
               2
@@ -168,45 +163,29 @@ export async function scienceStats(
       };
     }
 
-    if (!input.data) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                success: false,
-                error: 'Missing required parameter: data',
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    }
+    const validatedInput = validation.data!;
 
     // Execute statistical test
-    const result = await executePythonStats(input);
+    const result = await executePythonStats(validatedInput);
 
     // Save to memory if requested
-    if (input.save_to_memory && result.success && memoryManager) {
+    if (validatedInput.save_to_memory && result.success && memoryManager) {
       try {
-        const memoryKey = input.memory_key || `stats_${input.test}_${Date.now()}`;
-        const memorySummary = formatStatsForMemory(input.test, result);
+        const memoryKey = validatedInput.memory_key || `stats_${validatedInput.test}_${Date.now()}`;
+        const memorySummary = formatStatsForMemory(validatedInput.test, result);
 
         await memoryManager.save({
           key: memoryKey,
           value: memorySummary,
           metadata: {
             category: 'science_stats',
-            tags: ['statistics', input.test, 'analysis'],
+            tags: ['statistics', validatedInput.test, 'analysis'],
           },
         });
 
         result.memory_saved = true;
-      } catch (error: any) {
-        console.error('Failed to save stats result to memory:', error);
+      } catch (error: unknown) {
+        logger.error('Failed to save stats result to memory:', error);
       }
     }
 
@@ -218,7 +197,8 @@ export async function scienceStats(
         },
       ],
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     return {
       content: [
         {
@@ -226,7 +206,7 @@ export async function scienceStats(
           text: JSON.stringify(
             {
               success: false,
-              error: error.message,
+              error: message,
             },
             null,
             2

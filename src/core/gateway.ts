@@ -17,6 +17,7 @@ import { TDDManager } from '../features/tdd/tdd-manager.js';
 import { GuideManager } from '../features/guide/guide-manager.js';
 import { initializeGuides } from '../features/guide/seed-guides.js';
 import { ScienceManager } from '../features/science/index.js';
+import logger from '../utils/logger.js';
 
 export interface MCPServerConfig {
   id: string;
@@ -60,7 +61,7 @@ export class AwesomePluginGateway {
     this.server = new Server(
       {
         name: 'awesome-plugin',
-        version: '1.0.0',
+        version: '1.1.0',
       },
       {
         capabilities: {
@@ -118,12 +119,12 @@ export class AwesomePluginGateway {
    */
   private async initializeGuidesIfNeeded(): Promise<void> {
     try {
-      // Use the GuideManager's store and indexer
-      const store = (this.guideManager as any).store;
-      const indexer = (this.guideManager as any).indexer;
+      // Use the GuideManager's store and indexer via proper accessors
+      const store = this.guideManager.getStore();
+      const indexer = this.guideManager.getIndexer();
       await initializeGuides(store, indexer);
     } catch (error) {
-      console.error('Failed to initialize guides:', error);
+      logger.error('Failed to initialize guides:', error);
     }
   }
 
@@ -216,7 +217,7 @@ export class AwesomePluginGateway {
     // Save to metadata store
     this.metadataStore.addTools([...memoryTools, ...agentTools, ...planningTools, ...tddTools, ...guideTools, ...scienceTools]);
 
-    console.log(`Registered ${memoryTools.length} memory + ${agentTools.length} agent + ${planningTools.length} planning + ${tddTools.length} tdd + ${guideTools.length} guide + ${scienceTools.length} science tools`);
+    logger.info(`Registered ${memoryTools.length} memory + ${agentTools.length} agent + ${planningTools.length} planning + ${tddTools.length} tdd + ${guideTools.length} guide + ${scienceTools.length} science tools`);
   }
 
   private setupHandlers(): void {
@@ -281,9 +282,9 @@ export class AwesomePluginGateway {
           }
           result = await client.callTool(toolName, request.params.arguments || {});
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         success = false;
-        console.error(`Tool call failed (${toolName}):`, error);
+        logger.error(`Tool call failed (${toolName}):`, error);
         throw error;
       } finally {
         const responseTime = performance.now() - startTime;
@@ -323,10 +324,10 @@ export class AwesomePluginGateway {
       // Create and connect MCP client
       const client = new MCPClient(config, {
         onError: (error) => {
-          console.error(`MCP client error (${config.id}):`, error);
+          logger.error(`MCP client error (${config.id}):`, error);
         },
         onDisconnect: () => {
-          console.log(`MCP client disconnected (${config.id})`);
+          logger.info(`MCP client disconnected (${config.id})`);
           this.mcpClients.delete(config.id);
         },
       });
@@ -340,7 +341,7 @@ export class AwesomePluginGateway {
       // Connection failed - clean up
       this.connectedServers.delete(config.id);
       this.mcpClients.delete(config.id);
-      console.error(`Failed to connect to server ${config.name}:`, error);
+      logger.error(`Failed to connect to server ${config.name}:`, error);
       throw error;
     }
   }
@@ -369,9 +370,9 @@ export class AwesomePluginGateway {
       // Save tools to metadata store
       this.metadataStore.addTools(tools);
 
-      console.log(`Registered ${tools.length} tools from server: ${serverId}`);
+      logger.info(`Registered ${tools.length} tools from server: ${serverId}`);
     } catch (error) {
-      console.error(`Failed to register tools from server ${serverId}:`, error);
+      logger.error(`Failed to register tools from server ${serverId}:`, error);
       throw error;
     }
   }
@@ -402,7 +403,7 @@ export class AwesomePluginGateway {
     this.metadataStore.removePlugin(serverId);
 
     this.connectedServers.delete(serverId);
-    console.log(`Disconnected server: ${serverId}, removed ${removedTools.length} tools`);
+    logger.info(`Disconnected server: ${serverId}, removed ${removedTools.length} tools`);
   }
 
   /**
@@ -419,7 +420,7 @@ export class AwesomePluginGateway {
     // Process query to extract intent
     const processedQuery = this.queryProcessor.processQuery(query);
 
-    console.log('Query processed:', {
+    logger.debug('Query processed:', {
       original: processedQuery.originalQuery,
       intent: processedQuery.intent,
       keywords: processedQuery.keywords,
@@ -430,7 +431,7 @@ export class AwesomePluginGateway {
       maxLayer2: limit,
     });
 
-    console.log('Tool search completed:', {
+    logger.debug('Tool search completed:', {
       searchMethod: result.strategy.searchMethod,
       searchTimeMs: result.strategy.searchTimeMs,
       foundTools: result.relevant.length,
@@ -462,8 +463,8 @@ export class AwesomePluginGateway {
   async start(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.log('Awesome Plugin Gateway started');
-    console.log('Statistics:', this.getStatistics());
+    logger.info('Awesome Plugin Gateway started');
+    logger.info('Statistics:', this.getStatistics());
   }
 
   /**
@@ -471,28 +472,83 @@ export class AwesomePluginGateway {
    */
   async stop(): Promise<void> {
     // Disconnect all MCP clients
-    for (const client of this.mcpClients.values()) {
-      await client.disconnect();
+    try {
+      for (const client of this.mcpClients.values()) {
+        try {
+          await client.disconnect();
+        } catch (error) {
+          logger.error('Failed to disconnect MCP client:', error);
+        }
+      }
+      this.mcpClients.clear();
+    } catch (error) {
+      logger.error('Failed to clear MCP clients:', error);
     }
-    this.mcpClients.clear();
 
     // Disconnect all servers
-    for (const serverId of this.connectedServers.keys()) {
-      await this.disconnectServer(serverId);
+    try {
+      for (const serverId of this.connectedServers.keys()) {
+        try {
+          await this.disconnectServer(serverId);
+        } catch (error) {
+          logger.error(`Failed to disconnect server ${serverId}:`, error);
+        }
+      }
+    } catch (error) {
+      logger.error('Failed to disconnect servers:', error);
     }
 
     // Close internal features
-    this.memoryManager.close();
-    this.agentOrchestrator.close();
-    this.planningManager.close();
-    this.tddManager.close();
-    this.guideManager.close();
-    this.scienceManager.close();
+    try {
+      this.memoryManager.close();
+    } catch (error) {
+      logger.error('Failed to close memory manager:', error);
+    }
+
+    try {
+      this.agentOrchestrator.close();
+    } catch (error) {
+      logger.error('Failed to close agent orchestrator:', error);
+    }
+
+    try {
+      this.planningManager.close();
+    } catch (error) {
+      logger.error('Failed to close planning manager:', error);
+    }
+
+    try {
+      this.tddManager.close();
+    } catch (error) {
+      logger.error('Failed to close TDD manager:', error);
+    }
+
+    try {
+      this.guideManager.close();
+    } catch (error) {
+      logger.error('Failed to close guide manager:', error);
+    }
+
+    try {
+      this.scienceManager.close();
+    } catch (error) {
+      logger.error('Failed to close science manager:', error);
+    }
 
     // Close database
-    this.metadataStore.close();
+    try {
+      this.metadataStore.close();
+    } catch (error) {
+      logger.error('Failed to close metadata store:', error);
+    }
 
-    await this.server.close();
-    console.log('Awesome Plugin Gateway stopped');
+    // Close server
+    try {
+      await this.server.close();
+    } catch (error) {
+      logger.error('Failed to close server:', error);
+    }
+
+    logger.info('Awesome Plugin Gateway stopped');
   }
 }

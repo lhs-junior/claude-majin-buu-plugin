@@ -1,5 +1,17 @@
 import Database from 'better-sqlite3';
 import type { ToolMetadata } from '../core/gateway.js';
+import {
+  parsePluginRow,
+  parsePluginRows,
+  parseToolRow,
+  parseToolRows,
+  parseUsageLogRows,
+  parseCountRow,
+  parseMostUsedToolRows,
+  type PluginDbRow,
+  type ToolDbRow,
+} from '../utils/validation.js';
+import logger from '../utils/logger.js';
 
 export interface PluginRecord {
   id: string;
@@ -53,7 +65,7 @@ export class MetadataStore {
       dbOptions.readonly = options.readonly;
     }
     if (options.verbose) {
-      dbOptions.verbose = console.log;
+      dbOptions.verbose = (msg) => logger.debug(msg);
     }
 
     this.db = new Database(this.filepath, dbOptions);
@@ -146,7 +158,8 @@ export class MetadataStore {
       FROM plugins WHERE id = ?
     `);
 
-    const result = stmt.get(id) as any;
+    const row = stmt.get(id);
+    const result = parsePluginRow(row);
     if (!result) {
       return null;
     }
@@ -170,7 +183,19 @@ export class MetadataStore {
       FROM plugins ORDER BY quality_score DESC, usage_count DESC
     `);
 
-    return stmt.all() as PluginRecord[];
+    const rows = stmt.all();
+    const validated = parsePluginRows(rows);
+    return validated.map((r) => ({
+      id: r.id,
+      name: r.name,
+      command: r.command,
+      args: r.args || undefined,
+      env: r.env || undefined,
+      addedAt: r.addedAt,
+      lastUsed: r.lastUsed,
+      usageCount: r.usageCount,
+      qualityScore: r.qualityScore,
+    }));
   }
 
   removePlugin(id: string): void {
@@ -226,18 +251,19 @@ export class MetadataStore {
       FROM tools WHERE name = ?
     `);
 
-    const row = stmt.get(name) as any;
-    if (!row) {
+    const row = stmt.get(name);
+    const validated = parseToolRow(row);
+    if (!validated) {
       return null;
     }
 
     return {
-      name: row.name,
-      description: row.description,
-      inputSchema: JSON.parse(row.inputSchema),
-      serverId: row.serverId,
-      category: row.category || undefined,
-      keywords: row.keywords ? JSON.parse(row.keywords) : undefined,
+      name: validated.name,
+      description: validated.description || undefined,
+      inputSchema: JSON.parse(validated.inputSchema),
+      serverId: validated.serverId,
+      category: validated.category || undefined,
+      keywords: validated.keywords ? JSON.parse(validated.keywords) : undefined,
     };
   }
 
@@ -247,13 +273,14 @@ export class MetadataStore {
       FROM tools ORDER BY usage_count DESC
     `);
 
-    const rows = stmt.all() as any[];
-    return rows.map((row) => ({
+    const rows = stmt.all();
+    const validated = parseToolRows(rows);
+    return validated.map((row) => ({
       name: row.name,
-      description: row.description,
+      description: row.description || undefined,
       inputSchema: JSON.parse(row.inputSchema),
       serverId: row.serverId,
-      category: row.category,
+      category: row.category || undefined,
       keywords: row.keywords ? JSON.parse(row.keywords) : undefined,
     }));
   }
@@ -264,13 +291,14 @@ export class MetadataStore {
       FROM tools WHERE server_id = ? ORDER BY usage_count DESC
     `);
 
-    const rows = stmt.all(serverId) as any[];
-    return rows.map((row) => ({
+    const rows = stmt.all(serverId);
+    const validated = parseToolRows(rows);
+    return validated.map((row) => ({
       name: row.name,
-      description: row.description,
+      description: row.description || undefined,
       inputSchema: JSON.parse(row.inputSchema),
       serverId: row.serverId,
-      category: row.category,
+      category: row.category || undefined,
       keywords: row.keywords ? JSON.parse(row.keywords) : undefined,
     }));
   }
@@ -314,7 +342,7 @@ export class MetadataStore {
 
   getUsageLogs(options?: { limit?: number; toolName?: string }): UsageLogRecord[] {
     let query = 'SELECT * FROM usage_logs';
-    const params: any[] = [];
+    const params: (string | number)[] = [];
 
     if (options?.toolName) {
       query += ' WHERE tool_name = ?';
@@ -329,15 +357,16 @@ export class MetadataStore {
     }
 
     const stmt = this.db.prepare(query);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params);
+    const validated = parseUsageLogRows(rows);
 
-    return rows.map((row) => ({
+    return validated.map((row) => ({
       id: row.id,
       timestamp: row.timestamp,
       toolName: row.tool_name,
       query: row.query,
-      success: row.success === 1,
-      responseTime: row.response_time,
+      success: row.success === 1 || row.success === true,
+      responseTime: row.response_time ?? undefined,
     }));
   }
 
@@ -351,13 +380,20 @@ export class MetadataStore {
   // ========== Statistics ==========
 
   getStatistics() {
-    const pluginCount = this.db.prepare('SELECT COUNT(*) as count FROM plugins').get() as any;
-    const toolCount = this.db.prepare('SELECT COUNT(*) as count FROM tools').get() as any;
-    const logCount = this.db.prepare('SELECT COUNT(*) as count FROM usage_logs').get() as any;
+    const pluginCount = parseCountRow(
+      this.db.prepare('SELECT COUNT(*) as count FROM plugins').get()
+    );
+    const toolCount = parseCountRow(
+      this.db.prepare('SELECT COUNT(*) as count FROM tools').get()
+    );
+    const logCount = parseCountRow(
+      this.db.prepare('SELECT COUNT(*) as count FROM usage_logs').get()
+    );
 
-    const mostUsedTools = this.db
+    const mostUsedToolsRaw = this.db
       .prepare('SELECT name, usage_count FROM tools ORDER BY usage_count DESC LIMIT 5')
-      .all() as any[];
+      .all();
+    const mostUsedTools = parseMostUsedToolRows(mostUsedToolsRaw);
 
     return {
       pluginCount: pluginCount.count,

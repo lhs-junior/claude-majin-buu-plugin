@@ -18,6 +18,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
+ * Arguments for analyze method
+ */
+interface AnalyzeArgs {
+  action: 'load' | 'describe' | 'transform' | 'query' | 'execute';
+  source: string;
+  source_type: 'csv' | 'json' | 'parquet' | 'dict' | 'memory';
+  options?: Record<string, unknown>;
+  transformations?: Array<{
+    operation: string;
+    [key: string]: unknown;
+  }>;
+  query?: string;
+  code?: string;
+  save_to_memory?: {
+    key: string;
+    category?: string;
+    tags?: string[];
+  };
+  create_todo?: {
+    content: string;
+    tags?: string[];
+  };
+}
+
+/**
  * Science Analyze Tool
  *
  * Provides data analysis capabilities using Python/pandas:
@@ -156,9 +181,9 @@ export class ScienceAnalyzer {
   /**
    * Handle tool calls
    */
-  async handleToolCall(toolName: string, args: any): Promise<any> {
+  async handleToolCall(toolName: string, args: unknown): Promise<unknown> {
     if (toolName === 'science_analyze') {
-      return this.analyze(args);
+      return this.analyze(args as AnalyzeArgs);
     }
     throw new Error(`Unknown science tool: ${toolName}`);
   }
@@ -166,29 +191,9 @@ export class ScienceAnalyzer {
   /**
    * Execute data analysis
    */
-  private async analyze(args: {
-    action: 'load' | 'describe' | 'transform' | 'query' | 'execute';
-    source: string;
-    source_type: 'csv' | 'json' | 'parquet' | 'dict' | 'memory';
-    options?: Record<string, any>;
-    transformations?: Array<{
-      operation: string;
-      [key: string]: any;
-    }>;
-    query?: string;
-    code?: string;
-    save_to_memory?: {
-      key: string;
-      category?: string;
-      tags?: string[];
-    };
-    create_todo?: {
-      content: string;
-      tags?: string[];
-    };
-  }): Promise<{
+  private async analyze(args: AnalyzeArgs): Promise<{
     success: boolean;
-    result?: any;
+    result?: unknown;
     error?: string;
     shape?: { rows: number; columns: number };
     memory_id?: string;
@@ -229,8 +234,9 @@ export class ScienceAnalyzer {
             },
           });
           memory_id = memoryResult.id;
-        } catch (error: any) {
-          console.warn('Failed to save to memory:', error.message);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.warn('Failed to save to memory:', message);
         }
       }
 
@@ -243,8 +249,9 @@ export class ScienceAnalyzer {
             tags: args.create_todo.tags || ['science', 'analysis'],
           });
           todo_id = todoResult.todo.id;
-        } catch (error: any) {
-          console.warn('Failed to create TODO:', error.message);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.warn('Failed to create TODO:', message);
         }
       }
 
@@ -255,10 +262,11 @@ export class ScienceAnalyzer {
         memory_id,
         todo_id,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        error: error.message,
+        error: message,
       };
     }
   }
@@ -312,10 +320,11 @@ export class ScienceAnalyzer {
         try {
           const output = JSON.parse(stdout);
           resolve(output);
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
           resolve({
             success: false,
-            error: `Failed to parse Python output: ${error.message}`,
+            error: `Failed to parse Python output: ${message}`,
             traceback: stdout,
           });
         }
@@ -325,8 +334,9 @@ export class ScienceAnalyzer {
       try {
         pythonProcess.stdin.write(JSON.stringify(input));
         pythonProcess.stdin.end();
-      } catch (error: any) {
-        reject(new Error(`Failed to write to Python stdin: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        reject(new Error(`Failed to write to Python stdin: ${message}`));
       }
     });
   }

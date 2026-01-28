@@ -6,6 +6,7 @@
 
 import { Octokit } from '@octokit/rest';
 import { QualityEvaluator, type ProjectInfo, type QualityScore } from './quality-evaluator.js';
+import logger from '../utils/logger.js';
 
 export interface AbsorbedProject {
   name: string;
@@ -57,7 +58,7 @@ export class UpstreamMonitor {
           updates.push(update);
         }
       } catch (error: any) {
-        console.error(`Failed to check updates for ${project.name}:`, error.message);
+        logger.error(`Failed to check updates for ${project.name}:`, error.message);
       }
     }
 
@@ -68,7 +69,9 @@ export class UpstreamMonitor {
    * 특정 프로젝트 업데이트 확인
    */
   async checkProjectUpdate(project: AbsorbedProject): Promise<UpstreamUpdate | null> {
-    const [owner, repo] = project.repo.split('/');
+    const parts = project.repo.split('/');
+    const owner = parts[0] ?? '';
+    const repo = parts[1] ?? '';
 
     try {
       // Get latest release
@@ -81,7 +84,7 @@ export class UpstreamMonitor {
 
       // Version 비교
       if (this.isNewerVersion(latestVersion, project.absorbedVersion)) {
-        console.log(`🆕 ${project.name} has new version: ${latestVersion}`);
+        logger.info(`🆕 ${project.name} has new version: ${latestVersion}`);
 
         // Changelog 분석
         const changelog = release.body || '';
@@ -221,8 +224,10 @@ export class UpstreamMonitor {
     const currentParts = this.parseVersion(current);
 
     for (let i = 0; i < 3; i++) {
-      if (latestParts[i] > currentParts[i]) return true;
-      if (latestParts[i] < currentParts[i]) return false;
+      const latestPart = latestParts[i] ?? 0;
+      const currentPart = currentParts[i] ?? 0;
+      if (latestPart > currentPart) return true;
+      if (latestPart < currentPart) return false;
     }
 
     return false;
@@ -242,7 +247,9 @@ export class UpstreamMonitor {
    * GitHub issue 생성 (tracking용)
    */
   async createTrackingIssue(update: UpstreamUpdate, targetRepo: string): Promise<string> {
-    const [owner, repo] = targetRepo.split('/');
+    const parts = targetRepo.split('/');
+    const owner = parts[0] ?? '';
+    const repo = parts[1] ?? '';
 
     const title = `[Upstream Update] ${update.project.name} ${update.latestVersion}`;
     const body = `## Upstream Update Detected
@@ -281,9 +288,9 @@ ${update.project.improvements.map((i) => `- ${i}`).join('\n')}
         labels: update.worthAbsorbing ? ['absorption', 'upstream-update'] : ['upstream-update'],
       });
 
-      return issue.html_url;
+      return issue.html_url ?? '';
     } catch (error: any) {
-      console.error('Failed to create tracking issue:', error.message);
+      logger.error('Failed to create tracking issue:', error.message);
       throw error;
     }
   }

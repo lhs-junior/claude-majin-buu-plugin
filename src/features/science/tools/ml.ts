@@ -2,30 +2,19 @@ import { spawn } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { ToolMetadata } from '../../../core/gateway.js';
+import type { MemoryManager } from '../../memory/memory-manager.js';
+import type { PlanningManager } from '../../planning/planning-manager.js';
+import {
+  MLInputSchema,
+  validateInput,
+  type MLInput,
+} from '../../../validation/schemas.js';
+import logger from '../../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export interface MLInput {
-  action: 'train' | 'predict' | 'evaluate' | 'tune' | 'explain' | 'save' | 'load';
-  data: {
-    X?: number[][];
-    y?: number[];
-    algorithm?: 'linear_regression' | 'logistic_regression' | 'random_forest' | 'xgboost' | 'svm' | 'kmeans';
-    task_type?: 'regression' | 'classification' | 'clustering';
-    model_id?: string;
-    test_size?: number;
-    params?: Record<string, any>;
-    scale?: boolean;
-    param_grid?: Record<string, any[]>;
-    cv?: number;
-    filepath?: string;
-  };
-  save_to_memory?: boolean;
-  memory_key?: string;
-  save_to_planning?: boolean;
-  planning_context?: string;
-}
+export type { MLInput };
 
 export interface MLResult {
   success: boolean;
@@ -40,14 +29,14 @@ export interface MLResult {
   n_test?: number;
   n_predictions?: number;
   n_samples?: number;
-  best_params?: Record<string, any>;
+  best_params?: Record<string, unknown>;
   best_score?: number;
   cv_results?: {
     mean_scores: number[];
     std_scores: number[];
   };
   model_params?: Record<string, string>;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   filepath?: string;
   error?: string;
   memory_saved?: boolean;
@@ -88,10 +77,11 @@ async function executePythonML(input: MLInput): Promise<MLResult> {
       try {
         const result = JSON.parse(stdout);
         resolve(result);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
         resolve({
           success: false,
-          error: `Failed to parse Python output: ${error.message}`,
+          error: `Failed to parse Python output: ${message}`,
         });
       }
     });
@@ -112,10 +102,11 @@ async function executePythonML(input: MLInput): Promise<MLResult> {
     try {
       python.stdin.write(JSON.stringify(inputData));
       python.stdin.end();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       resolve({
         success: false,
-        error: `Failed to write to Python stdin: ${error.message}`,
+        error: `Failed to write to Python stdin: ${message}`,
       });
     }
   });
@@ -207,13 +198,14 @@ function formatMLForPlanning(action: string, result: MLResult, context?: string)
  * Perform machine learning operations
  */
 export async function scienceML(
-  input: MLInput,
-  memoryManager?: any,
-  planningManager?: any
+  input: unknown,
+  memoryManager?: MemoryManager,
+  planningManager?: PlanningManager
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
-    // Validate input
-    if (!input.action) {
+    // Validate input using Zod schema
+    const validation = validateInput(MLInputSchema, input);
+    if (!validation.success) {
       return {
         content: [
           {
@@ -221,7 +213,7 @@ export async function scienceML(
             text: JSON.stringify(
               {
                 success: false,
-                error: 'Missing required parameter: action',
+                error: validation.error,
               },
               null,
               2
@@ -231,43 +223,45 @@ export async function scienceML(
       };
     }
 
+    const validatedInput = validation.data!;
+
     // Execute ML operation
-    const result = await executePythonML(input);
+    const result = await executePythonML(validatedInput);
 
     // Save to memory if requested
-    if (input.save_to_memory && result.success && memoryManager) {
+    if (validatedInput.save_to_memory && result.success && memoryManager) {
       try {
-        const memoryKey = input.memory_key || `ml_${input.action}_${Date.now()}`;
-        const memorySummary = formatMLForMemory(input.action, result);
+        const memoryKey = validatedInput.memory_key || `ml_${validatedInput.action}_${Date.now()}`;
+        const memorySummary = formatMLForMemory(validatedInput.action, result);
 
         await memoryManager.save({
           key: memoryKey,
           value: memorySummary,
           metadata: {
             category: 'science_ml',
-            tags: ['machine-learning', input.action, result.algorithm || 'unknown'],
+            tags: ['machine-learning', validatedInput.action, result.algorithm || 'unknown'],
           },
         });
 
         result.memory_saved = true;
-      } catch (error: any) {
-        console.error('Failed to save ML result to memory:', error);
+      } catch (error: unknown) {
+        logger.error('Failed to save ML result to memory:', error);
       }
     }
 
-    // Save to planning if requested
-    if (input.save_to_planning && result.success && planningManager) {
+    // Save to planning if requested (using create instead of appendToScratchpad which doesn't exist)
+    if (validatedInput.save_to_planning && result.success && planningManager) {
       try {
-        const planningSummary = formatMLForPlanning(input.action, result, input.planning_context);
+        const planningSummary = formatMLForPlanning(validatedInput.action, result, validatedInput.planning_context);
 
-        await planningManager.appendToScratchpad({
+        planningManager.create({
           content: planningSummary,
-          section: 'ml_results',
+          tags: ['ml_results', validatedInput.action],
         });
 
         result.planning_saved = true;
-      } catch (error: any) {
-        console.error('Failed to save ML result to planning:', error);
+      } catch (error: unknown) {
+        logger.error('Failed to save ML result to planning:', error);
       }
     }
 
@@ -279,7 +273,8 @@ export async function scienceML(
         },
       ],
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     return {
       content: [
         {
@@ -287,7 +282,7 @@ export async function scienceML(
           text: JSON.stringify(
             {
               success: false,
-              error: error.message,
+              error: message,
             },
             null,
             2

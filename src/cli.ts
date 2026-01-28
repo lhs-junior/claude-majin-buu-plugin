@@ -6,6 +6,7 @@ import { AwesomePluginGateway } from './core/gateway.js';
 import { GitHubExplorer } from './discovery/github-explorer.js';
 import { QualityEvaluator } from './discovery/quality-evaluator.js';
 import { PluginInstaller } from './discovery/plugin-installer.js';
+import logger from './utils/logger.js';
 
 const program = new Command();
 
@@ -26,7 +27,7 @@ function getRelativeTime(date: Date): string {
 program
   .name('awesome-plugin')
   .description('Awesome MCP Meta Plugin - Intelligent tool selection and auto-discovery')
-  .version('1.0.0');
+  .version('1.1.0');
 
 program
   .command('start')

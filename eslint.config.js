@@ -18,6 +18,7 @@ export default [
       '@typescript-eslint': tseslint,
     },
     rules: {
+      'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-console': 'off',

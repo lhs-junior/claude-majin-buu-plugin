@@ -1,40 +1,34 @@
-import { AgentStore, AgentType, AgentStatus, AgentRecord } from './agent-store.js';
+import { AgentStore, AgentRecord } from './agent-store.js';
+import type { AgentType, AgentStatus } from './agent-store.js';
 import { AgentPromptRegistry } from './agent-prompt-registry.js';
 import type { ToolMetadata } from '../../core/gateway.js';
 import type { PlanningManager } from '../planning/planning-manager.js';
 import type { MemoryManager } from '../memory/memory-manager.js';
 import type { TDDManager } from '../tdd/tdd-manager.js';
+import {
+  SpawnAgentInputSchema,
+  AgentStatusInputSchema,
+  AgentResultInputSchema,
+  AgentTerminateInputSchema,
+  AgentListInputSchema,
+  validateInput,
+  type SpawnAgentInput,
+  type AgentStatusInput,
+  type AgentResultInput,
+  type AgentTerminateInput,
+  type AgentListInput,
+} from '../../validation/schemas.js';
 
-export interface SpawnAgentInput {
-  type: AgentType;
-  task: string;
-  timeout?: number;
-  specialistConfig?: Record<string, any>;
-  parentTaskId?: string | null;
-  memoryKeys?: string[];
-  saveToMemory?: boolean;
-  memoryTags?: string[];
-  createTodo?: boolean;
-  testPath?: string; // For TDD workflow
-}
-
-export interface AgentStatusInput {
-  agentId: string;
-}
-
-export interface AgentResultInput {
-  agentId: string;
-}
-
-export interface AgentTerminateInput {
-  agentId: string;
-}
-
-export interface AgentListInput {
-  status?: AgentStatus;
-  type?: AgentType;
-  limit?: number;
-}
+// Re-export types for backwards compatibility
+export type {
+  SpawnAgentInput,
+  AgentStatusInput,
+  AgentResultInput,
+  AgentTerminateInput,
+  AgentListInput,
+  AgentType,
+  AgentStatus,
+};
 
 /**
  * Agent Orchestrator - Manages agent lifecycle using Strategy Pattern
@@ -50,6 +44,7 @@ export class AgentOrchestrator {
   private store: AgentStore;
   private promptRegistry: AgentPromptRegistry;
   private runningAgents: Map<string, NodeJS.Timeout>;
+  private agentStateLocks: Map<string, boolean>; // Mutex for state updates
   private planningManager?: PlanningManager;
   private memoryManager?: MemoryManager;
   private tddManager?: TDDManager;
@@ -65,6 +60,7 @@ export class AgentOrchestrator {
     this.store = new AgentStore(dbPath);
     this.promptRegistry = new AgentPromptRegistry();
     this.runningAgents = new Map();
+    this.agentStateLocks = new Map();
 
     // Optional integrations
     this.planningManager = options?.planningManager;
@@ -248,21 +244,33 @@ export class AgentOrchestrator {
    * Terminate a running agent
    */
   terminate(input: AgentTerminateInput): { success: boolean } {
-    const timer = this.runningAgents.get(input.agentId);
-    if (timer) {
-      clearTimeout(timer);
-      this.runningAgents.delete(input.agentId);
+    // Check if agent is already in terminal state (race condition protection)
+    if (this.agentStateLocks.get(input.agentId)) {
+      return { success: false };
     }
 
     const agent = this.store.get(input.agentId);
-    if (agent && (agent.status === 'pending' || agent.status === 'running')) {
+    if (!agent || (agent.status !== 'pending' && agent.status !== 'running')) {
+      return { success: false };
+    }
+
+    // Acquire lock before state update
+    this.agentStateLocks.set(input.agentId, true);
+
+    try {
+      const timer = this.runningAgents.get(input.agentId);
+      if (timer) {
+        clearTimeout(timer);
+        this.runningAgents.delete(input.agentId);
+      }
+
       this.store.updateStatus(input.agentId, 'failed', {
         error: 'Terminated by user',
       });
       return { success: true };
+    } finally {
+      // Lock is kept to prevent future state changes
     }
-
-    return { success: false };
   }
 
   /**
@@ -322,22 +330,29 @@ export class AgentOrchestrator {
 
     // Simulate agent work with timeout
     const workPromise = this.simulateAgentWork(agent);
+    let timeoutTimer: NodeJS.Timeout | null = null;
     const timeoutPromise = agent.timeout
       ? new Promise<never>((_, reject) => {
-          const timer = setTimeout(() => {
+          timeoutTimer = setTimeout(() => {
             reject(new Error('Agent timeout'));
           }, agent.timeout!);
-          this.runningAgents.set(agent.id, timer);
+          this.runningAgents.set(agent.id, timeoutTimer);
         })
       : null;
 
     try {
       const result = timeoutPromise ? await Promise.race([workPromise, timeoutPromise]) : await workPromise;
 
-      // Clear timeout
-      const timer = this.runningAgents.get(agent.id);
-      if (timer) {
-        clearTimeout(timer);
+      // Acquire lock before finalizing state (race condition protection)
+      if (this.agentStateLocks.get(agent.id)) {
+        // Agent was already terminated, don't update state
+        return;
+      }
+      this.agentStateLocks.set(agent.id, true);
+
+      // Clear timeout - agent completed naturally
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
         this.runningAgents.delete(agent.id);
       }
 
@@ -366,10 +381,16 @@ export class AgentOrchestrator {
         });
       }
     } catch (error: any) {
+      // Acquire lock before finalizing state (race condition protection)
+      if (this.agentStateLocks.get(agent.id)) {
+        // Agent was already terminated, don't update state
+        return;
+      }
+      this.agentStateLocks.set(agent.id, true);
+
       // Clear timeout
-      const timer = this.runningAgents.get(agent.id);
-      if (timer) {
-        clearTimeout(timer);
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
         this.runningAgents.delete(agent.id);
       }
 
@@ -679,24 +700,49 @@ export class AgentOrchestrator {
   }
 
   /**
-   * Handle tool calls
+   * Handle tool calls with Zod validation
    */
-  async handleToolCall(toolName: string, args: unknown): Promise<any> {
+  async handleToolCall(toolName: string, args: unknown): Promise<unknown> {
     switch (toolName) {
-      case 'agent_spawn':
-        return this.spawn(args as SpawnAgentInput);
+      case 'agent_spawn': {
+        const validation = validateInput(SpawnAgentInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.spawn(validation.data!);
+      }
 
-      case 'agent_status':
-        return this.getStatus(args as AgentStatusInput);
+      case 'agent_status': {
+        const validation = validateInput(AgentStatusInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.getStatus(validation.data!);
+      }
 
-      case 'agent_result':
-        return this.getResult(args as AgentResultInput);
+      case 'agent_result': {
+        const validation = validateInput(AgentResultInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.getResult(validation.data!);
+      }
 
-      case 'agent_terminate':
-        return this.terminate(args as AgentTerminateInput);
+      case 'agent_terminate': {
+        const validation = validateInput(AgentTerminateInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.terminate(validation.data!);
+      }
 
-      case 'agent_list':
-        return this.list(args as AgentListInput);
+      case 'agent_list': {
+        const validation = validateInput(AgentListInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.list(validation.data!);
+      }
 
       default:
         throw new Error(`Unknown agent tool: ${toolName}`);
@@ -709,12 +755,19 @@ export class AgentOrchestrator {
   close(): void {
     // Terminate all running agents
     for (const [agentId, timer] of this.runningAgents.entries()) {
-      clearTimeout(timer);
-      this.store.updateStatus(agentId, 'failed', {
-        error: 'Orchestrator shutdown',
-      });
+      // Acquire lock before terminating
+      if (!this.agentStateLocks.get(agentId)) {
+        this.agentStateLocks.set(agentId, true);
+        clearTimeout(timer);
+        this.store.updateStatus(agentId, 'failed', {
+          error: 'Orchestrator shutdown',
+        });
+      } else {
+        clearTimeout(timer);
+      }
     }
     this.runningAgents.clear();
+    this.agentStateLocks.clear();
 
     this.store.close();
   }

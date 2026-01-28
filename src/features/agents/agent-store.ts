@@ -1,5 +1,14 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'crypto';
+import type { DatabaseRow, SqlParam } from '../../types/database.js';
+import {
+  parseCountRow,
+  parseAvgRow,
+  parseStatusCountRows,
+  parseTypeCountRows,
+  parseAgentRow,
+  type AgentDbRow,
+} from '../../utils/validation.js';
 
 export type AgentType =
   | 'researcher' | 'coder' | 'tester' | 'reviewer'  // existing base agents
@@ -14,7 +23,7 @@ export interface AgentRecord {
   type: AgentType;
   task: string;
   status: AgentStatus;
-  result?: any;
+  result?: unknown;
   error?: string;
   startedAt: number;
   completedAt?: number;
@@ -74,11 +83,13 @@ export class AgentStore {
    */
   private migrateToSpecialistSchema(): void {
     // Check if specialist_config column exists
-    const checkColumn = this.db.prepare(`
-      SELECT COUNT(*) as count
-      FROM pragma_table_info('agents')
-      WHERE name='specialist_config'
-    `).get() as { count: number };
+    const checkColumn = parseCountRow(
+      this.db.prepare(`
+        SELECT COUNT(*) as count
+        FROM pragma_table_info('agents')
+        WHERE name='specialist_config'
+      `).get()
+    );
 
     if (checkColumn.count === 0) {
       // Add new columns for specialist agents
@@ -100,7 +111,7 @@ export class AgentStore {
     task: string,
     options?: {
       timeout?: number;
-      specialistConfig?: Record<string, any>;
+      specialistConfig?: Record<string, unknown>;
       parentTaskId?: string | null;
       memoryKeys?: string[];
     }
@@ -148,18 +159,21 @@ export class AgentStore {
       SELECT * FROM agents WHERE id = ?
     `);
 
-    const row = stmt.get(id) as any;
+    const row = stmt.get(id);
     if (!row) return undefined;
 
-    return this.rowToRecord(row);
+    const validatedRow = parseAgentRow(row);
+    if (!validatedRow) return undefined;
+
+    return this.rowToRecord(validatedRow);
   }
 
   /**
    * Update agent status
    */
-  updateStatus(id: string, status: AgentStatus, data?: { result?: any; error?: string; progress?: string }): void {
+  updateStatus(id: string, status: AgentStatus, data?: { result?: unknown; error?: string; progress?: string }): void {
     const updates: string[] = ['status = ?'];
-    const params: any[] = [status];
+    const params: SqlParam[] = [status];
 
     if (data?.result !== undefined) {
       updates.push('result = ?');
@@ -193,7 +207,7 @@ export class AgentStore {
    */
   list(filter?: AgentFilter): AgentRecord[] {
     let sql = `SELECT * FROM agents WHERE 1=1`;
-    const params: any[] = [];
+    const params: SqlParam[] = [];
 
     if (filter?.status) {
       sql += ` AND status = ?`;
@@ -218,9 +232,12 @@ export class AgentStore {
     }
 
     const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params);
 
-    return rows.map(this.rowToRecord.bind(this));
+    return rows
+      .map(parseAgentRow)
+      .filter((row): row is AgentDbRow => row !== null)
+      .map(this.rowToRecord.bind(this));
   }
 
   /**
@@ -236,31 +253,33 @@ export class AgentStore {
    * Get statistics
    */
   getStatistics() {
-    const total = this.db.prepare(`SELECT COUNT(*) as count FROM agents`).get() as { count: number };
+    const total = parseCountRow(
+      this.db.prepare(`SELECT COUNT(*) as count FROM agents`).get()
+    );
 
-    const byStatus = this.db
-      .prepare(`
-      SELECT status, COUNT(*) as count
-      FROM agents
-      GROUP BY status
-    `)
-      .all() as Array<{ status: string; count: number }>;
+    const byStatus = parseStatusCountRows(
+      this.db.prepare(`
+        SELECT status, COUNT(*) as count
+        FROM agents
+        GROUP BY status
+      `).all()
+    );
 
-    const byType = this.db
-      .prepare(`
-      SELECT type, COUNT(*) as count
-      FROM agents
-      GROUP BY type
-    `)
-      .all() as Array<{ type: string; count: number }>;
+    const byType = parseTypeCountRows(
+      this.db.prepare(`
+        SELECT type, COUNT(*) as count
+        FROM agents
+        GROUP BY type
+      `).all()
+    );
 
-    const avgDuration = this.db
-      .prepare(`
-      SELECT AVG(completed_at - started_at) as avg
-      FROM agents
-      WHERE completed_at IS NOT NULL
-    `)
-      .get() as { avg: number | null };
+    const avgDuration = parseAvgRow(
+      this.db.prepare(`
+        SELECT AVG(completed_at - started_at) as avg
+        FROM agents
+        WHERE completed_at IS NOT NULL
+      `).get()
+    );
 
     return {
       total: total.count,
@@ -271,14 +290,14 @@ export class AgentStore {
   }
 
   /**
-   * Convert database row to AgentRecord
+   * Convert validated database row to AgentRecord
    */
-  private rowToRecord(row: any): AgentRecord {
+  private rowToRecord(row: AgentDbRow): AgentRecord {
     return {
       id: row.id,
-      type: row.type,
+      type: row.type as AgentType,
       task: row.task,
-      status: row.status,
+      status: row.status as AgentStatus,
       result: row.result ? JSON.parse(row.result) : undefined,
       error: row.error || undefined,
       startedAt: row.started_at,

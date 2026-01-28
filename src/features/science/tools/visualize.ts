@@ -16,6 +16,32 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
+ * Arguments for visualize method
+ */
+interface VisualizeArgs {
+  chart_type: 'line' | 'bar' | 'scatter' | 'histogram' | 'heatmap' | 'boxplot' | 'custom' | 'plotly';
+  source: string;
+  source_type: 'csv' | 'json' | 'parquet' | 'dict' | 'memory';
+  config?: Record<string, unknown>;
+  style?: {
+    theme?: 'default' | 'dark' | 'whitegrid' | 'darkgrid' | 'minimal';
+    palette?: string;
+    figsize?: [number, number];
+  };
+  output?: {
+    format?: 'png' | 'svg' | 'html';
+    path?: string;
+    dpi?: number;
+  };
+  code?: string;
+  save_to_memory?: {
+    key: string;
+    category?: string;
+    tags?: string[];
+  };
+}
+
+/**
  * Science Visualize Tool
  *
  * Provides data visualization capabilities using Python/matplotlib/seaborn:
@@ -229,9 +255,9 @@ export class ScienceVisualizer {
   /**
    * Handle tool calls
    */
-  async handleToolCall(toolName: string, args: any): Promise<any> {
+  async handleToolCall(toolName: string, args: unknown): Promise<unknown> {
     if (toolName === 'science_visualize') {
-      return this.visualize(args);
+      return this.visualize(args as VisualizeArgs);
     }
     throw new Error(`Unknown science tool: ${toolName}`);
   }
@@ -239,28 +265,7 @@ export class ScienceVisualizer {
   /**
    * Execute data visualization
    */
-  private async visualize(args: {
-    chart_type: 'line' | 'bar' | 'scatter' | 'histogram' | 'heatmap' | 'boxplot' | 'custom' | 'plotly';
-    source: string;
-    source_type: 'csv' | 'json' | 'parquet' | 'dict' | 'memory';
-    config?: Record<string, any>;
-    style?: {
-      theme?: 'default' | 'dark' | 'whitegrid' | 'darkgrid' | 'minimal';
-      palette?: string;
-      figsize?: [number, number];
-    };
-    output?: {
-      format?: 'png' | 'svg' | 'html';
-      path?: string;
-      dpi?: number;
-    };
-    code?: string;
-    save_to_memory?: {
-      key: string;
-      category?: string;
-      tags?: string[];
-    };
-  }): Promise<{
+  private async visualize(args: VisualizeArgs): Promise<{
     success: boolean;
     result?: {
       format: 'png' | 'svg' | 'html';
@@ -327,8 +332,9 @@ export class ScienceVisualizer {
             },
           });
           memory_id = memoryResult.id;
-        } catch (error: any) {
-          console.warn('Failed to save to memory:', error.message);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.warn('Failed to save to memory:', message);
         }
       }
 
@@ -337,10 +343,11 @@ export class ScienceVisualizer {
         result: result.result,
         memory_id,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        error: error.message,
+        error: message,
       };
     }
   }
@@ -394,10 +401,11 @@ export class ScienceVisualizer {
         try {
           const output = JSON.parse(stdout);
           resolve(output);
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
           resolve({
             success: false,
-            error: `Failed to parse Python output: ${error.message}`,
+            error: `Failed to parse Python output: ${message}`,
             traceback: stdout,
           });
         }
@@ -407,8 +415,9 @@ export class ScienceVisualizer {
       try {
         pythonProcess.stdin.write(JSON.stringify(input));
         pythonProcess.stdin.end();
-      } catch (error: any) {
-        reject(new Error(`Failed to write to Python stdin: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        reject(new Error(`Failed to write to Python stdin: ${message}`));
       }
     });
   }

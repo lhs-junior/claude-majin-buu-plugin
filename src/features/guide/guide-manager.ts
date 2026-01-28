@@ -7,24 +7,18 @@ import type {
   GuideRecord,
   TutorialStep,
   LearningProgress,
-  GuideCategory,
-  DifficultyLevel,
-  LearningStatus,
 } from './guide-types.js';
+import logger from '../../utils/logger.js';
+import {
+  GuideSearchInputSchema,
+  GuideTutorialInputSchema,
+  validateInput,
+  type GuideSearchInput,
+  type GuideTutorialInput,
+} from '../../validation/schemas.js';
 
-export interface GuideSearchInput {
-  query: string;
-  category?: GuideCategory;
-  difficulty?: DifficultyLevel;
-  relatedTool?: string;
-  limit?: number;
-}
-
-export interface GuideTutorialInput {
-  action: 'start' | 'next' | 'previous' | 'hint' | 'check' | 'status' | 'complete' | 'reset';
-  guideId?: string;
-  guideSlug?: string;
-}
+// Re-export types for backwards compatibility
+export type { GuideSearchInput, GuideTutorialInput };
 
 export class GuideManager {
   private store: GuideStore;
@@ -123,7 +117,7 @@ export class GuideManager {
 
       return { results };
     } catch (error: any) {
-      console.error('Failed to search guides:', error);
+      logger.error('Failed to search guides:', error);
       throw new Error(`Failed to search guides: ${error.message}`);
     }
   }
@@ -172,7 +166,7 @@ export class GuideManager {
           throw new Error(`Unknown tutorial action: ${input.action}`);
       }
     } catch (error: any) {
-      console.error('Failed to handle tutorial action:', error);
+      logger.error('Failed to handle tutorial action:', error);
       throw new Error(`Failed to handle tutorial action: ${error.message}`);
     }
   }
@@ -608,15 +602,25 @@ export class GuideManager {
   }
 
   /**
-   * Handle tool calls (for Gateway integration)
+   * Handle tool calls (for Gateway integration) with Zod validation
    */
-  async handleToolCall(toolName: string, args: unknown): Promise<any> {
+  async handleToolCall(toolName: string, args: unknown): Promise<unknown> {
     switch (toolName) {
-      case 'guide_search':
-        return this.search(args as GuideSearchInput);
+      case 'guide_search': {
+        const validation = validateInput(GuideSearchInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.search(validation.data!);
+      }
 
-      case 'guide_tutorial':
-        return this.tutorial(args as GuideTutorialInput);
+      case 'guide_tutorial': {
+        const validation = validateInput(GuideTutorialInputSchema, args);
+        if (!validation.success) {
+          throw new Error(validation.error);
+        }
+        return this.tutorial(validation.data!);
+      }
 
       default:
         throw new Error(`Unknown guide tool: ${toolName}`);
@@ -628,5 +632,19 @@ export class GuideManager {
    */
   close(): void {
     this.store.close();
+  }
+
+  /**
+   * Get the underlying store (for initialization purposes)
+   */
+  getStore(): GuideStore {
+    return this.store;
+  }
+
+  /**
+   * Get the BM25 indexer (for initialization purposes)
+   */
+  getIndexer(): BM25Indexer {
+    return this.indexer;
   }
 }

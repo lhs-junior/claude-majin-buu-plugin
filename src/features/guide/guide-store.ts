@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'crypto';
+import type { DatabaseRow, SqlParam } from '../../types/database.js';
 import {
   GuideRecord,
   GuideCategory,
@@ -179,7 +180,7 @@ export class GuideStore {
    */
   listGuides(filter?: GuideFilter): GuideRecord[] {
     let sql = 'SELECT * FROM guides WHERE 1=1';
-    const params: any[] = [];
+    const params: SqlParam[] = [];
 
     if (filter?.category) {
       sql += ' AND category = ?';
@@ -199,7 +200,7 @@ export class GuideStore {
     }
 
     const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params) as DatabaseRow[];
 
     let guides: GuideRecord[] = rows.map(this.guideRowToRecord.bind(this));
 
@@ -220,7 +221,7 @@ export class GuideStore {
     const keywords = query.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
 
     let sql = 'SELECT * FROM guides WHERE 1=1';
-    const params: any[] = [];
+    const params: SqlParam[] = [];
 
     if (keywords.length > 0) {
       const conditions = keywords
@@ -513,7 +514,7 @@ export class GuideStore {
    */
   listProgress(filter?: { status?: LearningStatus }): LearningProgress[] {
     let sql = 'SELECT * FROM learning_progress WHERE 1=1';
-    const params: any[] = [];
+    const params: SqlParam[] = [];
 
     if (filter?.status) {
       sql += ' AND status = ?';

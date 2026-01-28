@@ -5,6 +5,7 @@ import type { GuideStore } from './guide-store.js';
 import type { BM25Indexer } from '../../search/bm25-indexer.js';
 import type { GuideCategory, DifficultyLevel } from './guide-types.js';
 import type { ToolMetadata } from '../../core/gateway.js';
+import logger from '../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -52,7 +53,7 @@ function parseFrontmatter(content: string): {
     }
   }
 
-  return { metadata, body: body.trim() };
+  return { metadata, body: (body ?? '').trim() };
 }
 
 /**
@@ -214,7 +215,7 @@ function loadGuideFromFile(filepath: string): {
       checkCommand?: string;
       hints?: string[];
     }> = [];
-    if (category === 'tutorial' || body.includes('## Step')) {
+    if ((category === 'tutorial' || body?.includes('## Step')) && body) {
       tutorialSteps = parseTutorialSteps(body);
     }
 
@@ -234,7 +235,7 @@ function loadGuideFromFile(filepath: string): {
       tutorialSteps: tutorialSteps.length > 0 ? tutorialSteps : undefined,
     };
   } catch (error) {
-    console.error(`Failed to load guide from ${filepath}:`, error);
+    logger.error(`Failed to load guide from ${filepath}:`, error);
     return null;
   }
 }
@@ -249,11 +250,11 @@ export async function initializeGuides(
   // Check if guides already exist
   const existingGuides = store.listGuides({ limit: 1 });
   if (existingGuides.length > 0) {
-    console.log('Guides already initialized, skipping seed');
+    logger.info('Guides already initialized, skipping seed');
     return { loaded: 0, errors: 0 };
   }
 
-  console.log('Initializing guide database with seed content...');
+  logger.info('Initializing guide database with seed content...');
 
   // Define seed guide files (relative to project root)
   const projectRoot = join(__dirname, '../../../');
@@ -325,13 +326,13 @@ export async function initializeGuides(
       indexer.addDocument(toolMetadata);
 
       loaded++;
-      console.log(`Loaded guide: ${guide.title}`);
+      logger.info(`Loaded guide: ${guide.title}`);
     } catch (error) {
-      console.error(`Failed to create guide from ${relativeFile}:`, error);
+      logger.error(`Failed to create guide from ${relativeFile}:`, error);
       errors++;
     }
   }
 
-  console.log(`Guide initialization complete: ${loaded} loaded, ${errors} errors`);
+  logger.info(`Guide initialization complete: ${loaded} loaded, ${errors} errors`);
   return { loaded, errors };
 }

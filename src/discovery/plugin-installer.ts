@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as os from 'os';
 import type { GitHubRepoInfo } from './github-explorer.js';
 import type { MCPServerConfig } from '../core/gateway.js';
+import logger from '../utils/logger.js';
 
 export interface InstallOptions {
   configDir?: string; // Default: ~/.config/awesome-plugin
@@ -38,7 +39,7 @@ export class PluginInstaller {
   async installFromNpm(packageName: string): Promise<InstallResult> {
     const pluginId = this.generatePluginId(packageName);
 
-    console.log(`Installing plugin: ${packageName}`);
+    logger.info(`Installing plugin: ${packageName}`);
 
     try {
       // Install npm package
@@ -53,7 +54,7 @@ export class PluginInstaller {
       // Save config file
       await this.saveConfig(pluginId, config);
 
-      console.log(`✅ Successfully installed: ${packageName}`);
+      logger.info(`✅ Successfully installed: ${packageName}`);
 
       return {
         success: true,
@@ -62,7 +63,7 @@ export class PluginInstaller {
         installedPackage: packageName,
       };
     } catch (error: any) {
-      console.error(`❌ Failed to install ${packageName}:`, error.message);
+      logger.error(`❌ Failed to install ${packageName}:`, error.message);
       return {
         success: false,
         pluginId,
@@ -85,7 +86,7 @@ export class PluginInstaller {
     const githubUrl = `github:${repo.fullName}`;
     const pluginId = this.generatePluginId(repo.name);
 
-    console.log(`Installing plugin from GitHub: ${repo.fullName}`);
+    logger.info(`Installing plugin from GitHub: ${repo.fullName}`);
 
     try {
       await this.runNpmInstall(githubUrl);
@@ -96,7 +97,7 @@ export class PluginInstaller {
 
       await this.saveConfig(pluginId, config);
 
-      console.log(`✅ Successfully installed: ${repo.fullName}`);
+      logger.info(`✅ Successfully installed: ${repo.fullName}`);
 
       return {
         success: true,
@@ -105,7 +106,7 @@ export class PluginInstaller {
         installedPackage: githubUrl,
       };
     } catch (error: any) {
-      console.error(`❌ Failed to install ${repo.fullName}:`, error.message);
+      logger.error(`❌ Failed to install ${repo.fullName}:`, error.message);
       return {
         success: false,
         pluginId,
@@ -124,10 +125,10 @@ export class PluginInstaller {
       const configPath = path.join(this.configDir, 'servers', `${pluginId}.json`);
       await fs.unlink(configPath);
 
-      console.log(`✅ Successfully uninstalled: ${pluginId}`);
+      logger.info(`✅ Successfully uninstalled: ${pluginId}`);
       return true;
     } catch (error: any) {
-      console.error(`❌ Failed to uninstall ${pluginId}:`, error.message);
+      logger.error(`❌ Failed to uninstall ${pluginId}:`, error.message);
       return false;
     }
   }

@@ -1,6 +1,8 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { MCPServerConfig, ToolMetadata } from './gateway.js';
+import logger from '../utils/logger.js';
+import { extractMCPErrorText } from '../utils/validation.js';
 
 export interface MCPClientOptions {
   onError?: (error: Error) => void;
@@ -33,7 +35,7 @@ export class MCPClient {
    */
   async connect(): Promise<void> {
     try {
-      console.log(`Connecting to MCP server: ${this.config.name} (${this.config.id})`);
+      logger.info(`Connecting to MCP server: ${this.config.name} (${this.config.id})`);
 
       // Create stdio transport (it will spawn the process internally)
       const env: Record<string, string> = {};
@@ -69,9 +71,9 @@ export class MCPClient {
       this.connected = true;
       this.currentAttempt = 0;
 
-      console.log(`✅ Connected to MCP server: ${this.config.name}`);
-    } catch (error: any) {
-      console.error(`Failed to connect to MCP server (${this.config.id}):`, error);
+      logger.info(`✅ Connected to MCP server: ${this.config.name}`);
+    } catch (error: unknown) {
+      logger.error(`Failed to connect to MCP server (${this.config.id}):`, error);
       throw error;
     }
   }
@@ -92,9 +94,9 @@ export class MCPClient {
       }
 
       this.connected = false;
-      console.log(`Disconnected from MCP server: ${this.config.name}`);
-    } catch (error: any) {
-      console.error(`Error disconnecting from MCP server (${this.config.id}):`, error);
+      logger.info(`Disconnected from MCP server: ${this.config.name}`);
+    } catch (error: unknown) {
+      logger.error(`Error disconnecting from MCP server (${this.config.id}):`, error);
     }
   }
 
@@ -117,8 +119,8 @@ export class MCPClient {
         category: this.inferCategory(tool.name, tool.description),
         keywords: this.extractKeywords(tool.name, tool.description),
       }));
-    } catch (error: any) {
-      console.error(`Failed to list tools from ${this.config.id}:`, error);
+    } catch (error: unknown) {
+      logger.error(`Failed to list tools from ${this.config.id}:`, error);
       throw error;
     }
   }
@@ -139,13 +141,13 @@ export class MCPClient {
 
       // Check if MCP returned an error
       if (response.isError) {
-        const errorText = (response.content as any)?.[0]?.text || 'Unknown error';
+        const errorText = extractMCPErrorText(response.content);
         throw new Error(errorText);
       }
 
       return response;
-    } catch (error: any) {
-      console.error(`Failed to call tool ${name} on ${this.config.id}:`, error);
+    } catch (error: unknown) {
+      logger.error(`Failed to call tool ${name} on ${this.config.id}:`, error);
       throw error;
     }
   }
@@ -175,13 +177,13 @@ export class MCPClient {
     // Attempt reconnection if configured
     if (this.currentAttempt < this.reconnectAttempts) {
       this.currentAttempt++;
-      console.log(
+      logger.info(
         `Attempting to reconnect (${this.currentAttempt}/${this.reconnectAttempts})...`
       );
 
       setTimeout(() => {
         this.connect().catch((err) => {
-          console.error('Reconnection failed:', err);
+          logger.error('Reconnection failed:', err);
         });
       }, this.reconnectDelay);
     }

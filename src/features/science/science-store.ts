@@ -12,6 +12,17 @@ import {
   ScienceResult,
   DEFAULT_SCIENCE_CONFIG,
 } from './science-types.js';
+import type { DatabaseRow, SqlParam } from '../../types/database.js';
+import {
+  parseCountRow,
+  parseAvgRow,
+  parseNamespaceCountRows,
+  parseToolNameCountRows,
+  parseScienceSessionRow,
+  parseScienceResultRow,
+  type ScienceSessionDbRow,
+  type ScienceResultDbRow,
+} from '../../utils/validation.js';
 
 export interface SessionFilter {
   namespace?: string;
@@ -124,10 +135,13 @@ export class ScienceStore {
       SELECT * FROM science_sessions WHERE id = ?
     `);
 
-    const row = stmt.get(id) as any;
+    const row = stmt.get(id);
     if (!row) return undefined;
 
-    return this.rowToSession(row);
+    const validatedRow = parseScienceSessionRow(row);
+    if (!validatedRow) return undefined;
+
+    return this.rowToSession(validatedRow);
   }
 
   /**
@@ -136,7 +150,7 @@ export class ScienceStore {
   updateSession(
     id: string,
     updates: Partial<{
-      variables: Record<string, any>;
+      variables: Record<string, unknown>;
       packages: string[];
       history: string[];
       pickleData: Buffer;
@@ -145,7 +159,7 @@ export class ScienceStore {
   ): boolean {
     const now = Date.now();
     const fields: string[] = ['last_used_at = ?'];
-    const values: any[] = [now];
+    const values: SqlParam[] = [now];
 
     if (updates.variables !== undefined) {
       fields.push('variables = ?');
@@ -201,7 +215,7 @@ export class ScienceStore {
    */
   listSessions(filter?: SessionFilter): ScienceSession[] {
     let sql = `SELECT * FROM science_sessions WHERE 1=1`;
-    const params: any[] = [];
+    const params: SqlParam[] = [];
 
     if (filter?.namespace) {
       sql += ` AND namespace = ?`;
@@ -221,9 +235,12 @@ export class ScienceStore {
     }
 
     const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params);
 
-    return rows.map(this.rowToSession.bind(this));
+    return rows
+      .map(parseScienceSessionRow)
+      .filter((row): row is ScienceSessionDbRow => row !== null)
+      .map(this.rowToSession.bind(this));
   }
 
   /**
@@ -250,8 +267,8 @@ export class ScienceStore {
     sessionId: string,
     toolName: string,
     resultType: 'success' | 'error' | 'partial',
-    resultData: any,
-    metadata: Record<string, any> = {}
+    resultData: unknown,
+    metadata: Record<string, unknown> = {}
   ): ScienceResult {
     const id = randomUUID();
     const now = Date.now();
@@ -293,10 +310,13 @@ export class ScienceStore {
       SELECT * FROM science_results WHERE id = ?
     `);
 
-    const row = stmt.get(id) as any;
+    const row = stmt.get(id);
     if (!row) return undefined;
 
-    return this.rowToResult(row);
+    const validatedRow = parseScienceResultRow(row);
+    if (!validatedRow) return undefined;
+
+    return this.rowToResult(validatedRow);
   }
 
   /**
@@ -304,7 +324,7 @@ export class ScienceStore {
    */
   listResults(filter?: ResultFilter): ScienceResult[] {
     let sql = `SELECT * FROM science_results WHERE 1=1`;
-    const params: any[] = [];
+    const params: SqlParam[] = [];
 
     if (filter?.sessionId) {
       sql += ` AND session_id = ?`;
@@ -334,9 +354,12 @@ export class ScienceStore {
     }
 
     const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params);
 
-    return rows.map(this.rowToResult.bind(this));
+    return rows
+      .map(parseScienceResultRow)
+      .filter((row): row is ScienceResultDbRow => row !== null)
+      .map(this.rowToResult.bind(this));
   }
 
   /**
@@ -359,37 +382,43 @@ export class ScienceStore {
    * Get statistics
    */
   getStatistics() {
-    const totalSessions = this.db
-      .prepare(`SELECT COUNT(*) as count FROM science_sessions`)
-      .get() as { count: number };
+    const totalSessions = parseCountRow(
+      this.db.prepare(`SELECT COUNT(*) as count FROM science_sessions`).get()
+    );
 
-    const totalResults = this.db
-      .prepare(`SELECT COUNT(*) as count FROM science_results`)
-      .get() as { count: number };
+    const totalResults = parseCountRow(
+      this.db.prepare(`SELECT COUNT(*) as count FROM science_results`).get()
+    );
 
-    const sessionsByNamespace = this.db.prepare(`
-      SELECT namespace, COUNT(*) as count
-      FROM science_sessions
-      GROUP BY namespace
-      ORDER BY count DESC
-    `).all() as Array<{ namespace: string; count: number }>;
+    const sessionsByNamespace = parseNamespaceCountRows(
+      this.db.prepare(`
+        SELECT namespace, COUNT(*) as count
+        FROM science_sessions
+        GROUP BY namespace
+        ORDER BY count DESC
+      `).all()
+    );
 
-    const resultsByTool = this.db.prepare(`
-      SELECT tool_name, COUNT(*) as count
-      FROM science_results
-      GROUP BY tool_name
-      ORDER BY count DESC
-    `).all() as Array<{ tool_name: string; count: number }>;
+    const resultsByTool = parseToolNameCountRows(
+      this.db.prepare(`
+        SELECT tool_name, COUNT(*) as count
+        FROM science_results
+        GROUP BY tool_name
+        ORDER BY count DESC
+      `).all()
+    );
 
-    const avgExecutionCount = this.db.prepare(`
-      SELECT AVG(execution_count) as avg FROM science_sessions
-    `).get() as { avg: number };
+    const avgExecutionCount = parseAvgRow(
+      this.db.prepare(`SELECT AVG(execution_count) as avg FROM science_sessions`).get()
+    );
 
-    const recentActivity = this.db.prepare(`
-      SELECT COUNT(*) as count
-      FROM science_sessions
-      WHERE last_used_at > ?
-    `).get(Date.now() - 24 * 60 * 60 * 1000) as { count: number };
+    const recentActivity = parseCountRow(
+      this.db.prepare(`
+        SELECT COUNT(*) as count
+        FROM science_sessions
+        WHERE last_used_at > ?
+      `).get(Date.now() - 24 * 60 * 60 * 1000)
+    );
 
     return {
       sessions: {
@@ -436,9 +465,9 @@ export class ScienceStore {
   // ============================================================================
 
   /**
-   * Convert database row to ScienceSession
+   * Convert validated database row to ScienceSession
    */
-  private rowToSession(row: any): ScienceSession {
+  private rowToSession(row: ScienceSessionDbRow): ScienceSession {
     return {
       id: row.id,
       namespace: row.namespace,
@@ -453,14 +482,14 @@ export class ScienceStore {
   }
 
   /**
-   * Convert database row to ScienceResult
+   * Convert validated database row to ScienceResult
    */
-  private rowToResult(row: any): ScienceResult {
+  private rowToResult(row: ScienceResultDbRow): ScienceResult {
     return {
       id: row.id,
       sessionId: row.session_id,
       toolName: row.tool_name,
-      resultType: row.result_type,
+      resultType: row.result_type as 'success' | 'error' | 'partial',
       resultData: row.result_data ? JSON.parse(row.result_data) : null,
       metadata: row.metadata ? JSON.parse(row.metadata) : {},
       createdAt: row.created_at,

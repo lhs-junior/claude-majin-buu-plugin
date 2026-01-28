@@ -3,6 +3,7 @@ export { AwesomePluginGateway, type MCPServerConfig, type ToolMetadata, type Gat
 export { SessionManager, type Session } from './core/session-manager.js';
 export { ToolLoader, type LoadedToolsResult, type ToolLoadingStrategy } from './core/tool-loader.js';
 export { MCPClient, type MCPClientOptions } from './core/mcp-client.js';
+import logger from './utils/logger.js';
 
 // Search exports
 export { BM25Indexer, type SearchResult, type IndexedDocument, type BM25IndexerOptions } from './search/bm25-indexer.js';
@@ -40,13 +41,13 @@ async function main() {
 
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
-    console.log('\nShutting down...');
+    logger.info('\nShutting down...');
     await gateway.stop();
     process.exit(0);
   });
 
   process.on('SIGTERM', async () => {
-    console.log('\nShutting down...');
+    logger.info('\nShutting down...');
     await gateway.stop();
     process.exit(0);
   });
@@ -58,7 +59,7 @@ async function main() {
 // Run if this is the main module
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
-    console.error('Fatal error:', error);
+    logger.error('Fatal error:', error);
     process.exit(1);
   });
 }

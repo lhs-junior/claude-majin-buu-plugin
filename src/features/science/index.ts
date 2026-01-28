@@ -4,13 +4,16 @@
  */
 
 import type { ToolMetadata } from '../../core/gateway.js';
+import type { MemoryManager } from '../memory/memory-manager.js';
+import type { PlanningManager } from '../planning/planning-manager.js';
 import { scienceStats, getScienceStatsToolDefinition } from './tools/stats.js';
 import { scienceML, getScienceMLToolDefinition } from './tools/ml.js';
 import { scienceExport, getScienceExportToolDefinition } from './tools/export.js';
+import logger from '../../utils/logger.js';
 
 export interface ScienceManagerDependencies {
-  memoryManager?: any;
-  planningManager?: any;
+  memoryManager?: MemoryManager;
+  planningManager?: PlanningManager;
 }
 
 /**
@@ -18,8 +21,8 @@ export interface ScienceManagerDependencies {
  * Manages science-related tools (stats, ML, export)
  */
 export class ScienceManager {
-  private memoryManager?: any;
-  private planningManager?: any;
+  private memoryManager?: MemoryManager;
+  private planningManager?: PlanningManager;
 
   constructor(dependencies: ScienceManagerDependencies = {}) {
     this.memoryManager = dependencies.memoryManager;
@@ -42,7 +45,7 @@ export class ScienceManager {
    */
   async handleToolCall(
     toolName: string,
-    args: Record<string, any>
+    args: unknown
   ): Promise<{ content: Array<{ type: string; text: string }> }> {
     try {
       switch (toolName) {
@@ -111,7 +114,7 @@ export class ScienceManager {
    */
   close(): void {
     // No persistent resources to clean up
-    console.log('ScienceManager closed');
+    logger.info('ScienceManager closed');
   }
 }
 

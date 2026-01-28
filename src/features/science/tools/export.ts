@@ -2,36 +2,18 @@ import { spawn } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { ToolMetadata } from '../../../core/gateway.js';
+import type { MemoryManager } from '../../memory/memory-manager.js';
+import {
+  ExportInputSchema,
+  validateInput,
+  type ExportInput,
+} from '../../../validation/schemas.js';
+import logger from '../../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export interface ExportInput {
-  type: 'data' | 'report' | 'notebook' | 'model' | 'all';
-  data: {
-    // For data export
-    data?: Array<Record<string, any>>;
-    filepath?: string;
-    format?: 'csv' | 'excel' | 'json' | 'parquet';
-
-    // For report generation
-    title?: string;
-    sections?: Array<{
-      type: 'text' | 'table' | 'metrics' | 'plot' | 'code' | 'alert';
-      title?: string;
-      content: any;
-      alert_type?: 'info' | 'success' | 'warning';
-    }>;
-
-    // For notebook generation
-    cells?: Array<{
-      type: 'markdown' | 'code';
-      content: string;
-    }>;
-  };
-  save_to_memory?: boolean;
-  memory_key?: string;
-}
+export type { ExportInput };
 
 export interface ExportResult {
   success: boolean;
@@ -48,7 +30,7 @@ export interface ExportResult {
 /**
  * Execute Python export helper script
  */
-async function executePythonExport(type: string, data: any): Promise<ExportResult> {
+async function executePythonExport(type: string, data: unknown): Promise<ExportResult> {
   return new Promise((resolve, reject) => {
     const helperPath = join(__dirname, '../helpers/export_helper.py');
 
@@ -79,10 +61,11 @@ async function executePythonExport(type: string, data: any): Promise<ExportResul
       try {
         const result = JSON.parse(stdout);
         resolve(result);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
         resolve({
           success: false,
-          error: `Failed to parse Python output: ${error.message}`,
+          error: `Failed to parse Python output: ${message}`,
         });
       }
     });
@@ -103,10 +86,11 @@ async function executePythonExport(type: string, data: any): Promise<ExportResul
     try {
       python.stdin.write(JSON.stringify(inputData));
       python.stdin.end();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       resolve({
         success: false,
-        error: `Failed to write to Python stdin: ${error.message}`,
+        error: `Failed to write to Python stdin: ${message}`,
       });
     }
   });
@@ -145,12 +129,13 @@ function formatExportForMemory(type: string, result: ExportResult): string {
  * Export data and reports
  */
 export async function scienceExport(
-  input: ExportInput,
-  memoryManager?: any
+  input: unknown,
+  memoryManager?: MemoryManager
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
-    // Validate input
-    if (!input.type) {
+    // Validate input using Zod schema
+    const validation = validateInput(ExportInputSchema, input);
+    if (!validation.success) {
       return {
         content: [
           {
@@ -158,7 +143,7 @@ export async function scienceExport(
             text: JSON.stringify(
               {
                 success: false,
-                error: 'Missing required parameter: type',
+                error: validation.error,
               },
               null,
               2
@@ -168,45 +153,28 @@ export async function scienceExport(
       };
     }
 
-    if (!input.data || !input.data.filepath) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                success: false,
-                error: 'Missing required parameter: data.filepath',
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    }
-
+    const validatedInput = validation.data!;
     let result: ExportResult;
 
     // Handle different export types
-    if (input.type === 'data') {
-      result = await executePythonExport('data', input.data);
-    } else if (input.type === 'report') {
+    if (validatedInput.type === 'data') {
+      result = await executePythonExport('data', validatedInput.data);
+    } else if (validatedInput.type === 'report') {
       // Determine report format from filepath extension
-      const filepath = input.data.filepath;
+      const filepath = validatedInput.data.filepath;
       const reportType = filepath.endsWith('.pdf') ? 'pdf' : 'html';
-      result = await executePythonExport(reportType, input.data);
-    } else if (input.type === 'notebook') {
-      result = await executePythonExport('notebook', input.data);
-    } else if (input.type === 'all') {
+      result = await executePythonExport(reportType, validatedInput.data);
+    } else if (validatedInput.type === 'notebook') {
+      result = await executePythonExport('notebook', validatedInput.data);
+    } else if (validatedInput.type === 'all') {
       // Export multiple formats
       const results: ExportResult[] = [];
 
       // Export data if available
-      if (input.data.data) {
-        const baseFilepath = input.data.filepath.replace(/\.[^.]+$/, '');
+      if (validatedInput.data.data) {
+        const baseFilepath = validatedInput.data.filepath.replace(/\.[^.]+$/, '');
         const dataResult = await executePythonExport('data', {
-          ...input.data,
+          ...validatedInput.data,
           filepath: `${baseFilepath}.csv`,
           format: 'csv',
         });
@@ -214,20 +182,20 @@ export async function scienceExport(
       }
 
       // Generate HTML report if sections available
-      if (input.data.sections) {
-        const baseFilepath = input.data.filepath.replace(/\.[^.]+$/, '');
+      if (validatedInput.data.sections) {
+        const baseFilepath = validatedInput.data.filepath.replace(/\.[^.]+$/, '');
         const htmlResult = await executePythonExport('html', {
-          ...input.data,
+          ...validatedInput.data,
           filepath: `${baseFilepath}.html`,
         });
         results.push(htmlResult);
       }
 
       // Generate notebook if cells available
-      if (input.data.cells) {
-        const baseFilepath = input.data.filepath.replace(/\.[^.]+$/, '');
+      if (validatedInput.data.cells) {
+        const baseFilepath = validatedInput.data.filepath.replace(/\.[^.]+$/, '');
         const notebookResult = await executePythonExport('notebook', {
-          ...input.data,
+          ...validatedInput.data,
           filepath: `${baseFilepath}.ipynb`,
         });
         results.push(notebookResult);
@@ -237,35 +205,35 @@ export async function scienceExport(
       const successCount = results.filter((r) => r.success).length;
       result = {
         success: successCount > 0,
-        filepath: input.data.filepath,
+        filepath: validatedInput.data.filepath,
         format: 'multiple',
         error: successCount === 0 ? 'All exports failed' : undefined,
       };
     } else {
       result = {
         success: false,
-        error: `Unknown export type: ${input.type}`,
+        error: `Unknown export type: ${validatedInput.type}`,
       };
     }
 
     // Save to memory if requested
-    if (input.save_to_memory && result.success && memoryManager) {
+    if (validatedInput.save_to_memory && result.success && memoryManager) {
       try {
-        const memoryKey = input.memory_key || `export_${input.type}_${Date.now()}`;
-        const memorySummary = formatExportForMemory(input.type, result);
+        const memoryKey = validatedInput.memory_key || `export_${validatedInput.type}_${Date.now()}`;
+        const memorySummary = formatExportForMemory(validatedInput.type, result);
 
         await memoryManager.save({
           key: memoryKey,
           value: memorySummary,
           metadata: {
             category: 'science_export',
-            tags: ['export', input.type, result.format || 'unknown'],
+            tags: ['export', validatedInput.type, result.format || 'unknown'],
           },
         });
 
         result.memory_saved = true;
-      } catch (error: any) {
-        console.error('Failed to save export result to memory:', error);
+      } catch (error: unknown) {
+        logger.error('Failed to save export result to memory:', error);
       }
     }
 
@@ -277,7 +245,8 @@ export async function scienceExport(
         },
       ],
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     return {
       content: [
         {
@@ -285,7 +254,7 @@ export async function scienceExport(
           text: JSON.stringify(
             {
               success: false,
-              error: error.message,
+              error: message,
             },
             null,
             2

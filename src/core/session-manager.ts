@@ -1,3 +1,5 @@
+import logger from '../utils/logger.js';
+
 export interface Session {
   id: string;
   createdAt: Date;
@@ -28,7 +30,7 @@ export class SessionManager {
     this.sessions.set(id, session);
     this.currentSessionId = id;
 
-    console.log(`Session created: ${id}`);
+    logger.info(`Session created: ${id}`);
     return session;
   }
 
@@ -86,7 +88,7 @@ export class SessionManager {
     if (this.currentSessionId === sessionId) {
       this.currentSessionId = null;
     }
-    console.log(`Session deleted: ${sessionId}`);
+    logger.info(`Session deleted: ${sessionId}`);
   }
 
   cleanupExpiredSessions(maxAgeMs: number = 24 * 60 * 60 * 1000): number {
@@ -102,7 +104,7 @@ export class SessionManager {
     }
 
     if (deletedCount > 0) {
-      console.log(`Cleaned up ${deletedCount} expired sessions`);
+      logger.info(`Cleaned up ${deletedCount} expired sessions`);
     }
 
     return deletedCount;

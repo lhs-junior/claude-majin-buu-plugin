@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { randomUUID } from 'crypto';
+import type { DatabaseRow, SqlParam } from '../../types/database.js';
 
 export interface MemoryRecord {
   id: string;
@@ -107,7 +108,7 @@ export class MemoryStore {
       WHERE (expires_at IS NULL OR expires_at > ?)
     `;
 
-    const params: any[] = [now];
+    const params: SqlParam[] = [now];
 
     if (options?.category) {
       sql += ` AND category = ?`;
@@ -131,7 +132,7 @@ export class MemoryStore {
     }
 
     const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params) as any[];
+    const rows = stmt.all(...params) as DatabaseRow[];
 
     return rows.map(this.rowToRecord.bind(this));
   }
@@ -144,7 +145,7 @@ export class MemoryStore {
       SELECT * FROM memories WHERE id = ?
     `);
 
-    const row = stmt.get(id) as any;
+    const row = stmt.get(id) as DatabaseRow | undefined;
     if (!row) return undefined;
 
     // Update access count and last accessed
@@ -159,7 +160,7 @@ export class MemoryStore {
   list(filter?: MemoryFilter): MemoryRecord[] {
     const now = Date.now();
     let sql = `SELECT * FROM memories WHERE (expires_at IS NULL OR expires_at > ?)`;
-    const params: any[] = [now];
+    const params: SqlParam[] = [now];
 
     if (filter?.category) {
       sql += ` AND category = ?`;
@@ -258,17 +259,17 @@ export class MemoryStore {
   /**
    * Convert database row to MemoryRecord
    */
-  private rowToRecord(row: any): MemoryRecord {
+  private rowToRecord(row: DatabaseRow): MemoryRecord {
     return {
-      id: row.id,
-      key: row.key,
-      value: row.value,
-      category: row.category || undefined,
-      tags: row.tags ? JSON.parse(row.tags) : undefined,
-      createdAt: row.created_at,
-      expiresAt: row.expires_at || undefined,
-      accessCount: row.access_count,
-      lastAccessed: row.last_accessed || undefined,
+      id: String(row.id),
+      key: String(row.key),
+      value: String(row.value),
+      category: row.category ? String(row.category) : undefined,
+      tags: row.tags ? JSON.parse(String(row.tags)) : undefined,
+      createdAt: Number(row.created_at),
+      expiresAt: row.expires_at ? Number(row.expires_at) : undefined,
+      accessCount: Number(row.access_count),
+      lastAccessed: row.last_accessed ? Number(row.last_accessed) : undefined,
     };
   }
 

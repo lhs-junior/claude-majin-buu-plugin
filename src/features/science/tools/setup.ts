@@ -122,10 +122,11 @@ export class ScienceSetup {
         venvPath: this.venvPath,
         pythonVersion,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        message: `Failed to initialize environment: ${error.message}`,
+        message: `Failed to initialize environment: ${message}`,
       };
     }
   }
@@ -188,10 +189,11 @@ export class ScienceSetup {
         message: `Successfully installed ${installedPackages.length} package(s).`,
         packages: packageList,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        message: `Failed to install packages: ${error.message}`,
+        message: `Failed to install packages: ${message}`,
       };
     }
   }
@@ -215,10 +217,11 @@ export class ScienceSetup {
         message: `Found ${packages.length} installed package(s).`,
         packages,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        message: `Failed to list packages: ${error.message}`,
+        message: `Failed to list packages: ${message}`,
       };
     }
   }
@@ -236,10 +239,11 @@ export class ScienceSetup {
         success: true,
         message: 'Virtual environment reset successfully. Run init to recreate.',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        message: `Failed to reset environment: ${error.message}`,
+        message: `Failed to reset environment: ${message}`,
       };
     }
   }
@@ -285,10 +289,11 @@ export class ScienceSetup {
           diskUsage,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        message: `Failed to get status: ${error.message}`,
+        message: `Failed to get status: ${message}`,
       };
     }
   }

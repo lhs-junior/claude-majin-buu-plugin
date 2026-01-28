@@ -14,7 +14,7 @@ export interface ScienceSession {
   createdAt: number;
   lastUsedAt: number;
   executionCount: number;
-  variables: Record<string, any>; // serialized variable metadata
+  variables: Record<string, unknown>; // serialized variable metadata
   packages: string[]; // installed packages in this session
   history: string[]; // code execution history
   pickleData?: Buffer; // serialized Python session state
@@ -28,12 +28,12 @@ export interface ScienceResult {
   sessionId: string;
   toolName: string; // which tool produced this result
   resultType: 'success' | 'error' | 'partial';
-  resultData: any; // stdout, return values, plots, etc.
+  resultData: unknown; // stdout, return values, plots, etc.
   metadata: {
     executionTime?: number;
     memoryUsage?: number;
     outputSize?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   createdAt: number;
 }
@@ -104,7 +104,7 @@ export interface ScienceExecOutput {
   sessionId: string;
   stdout: string;
   stderr: string;
-  returnValues?: Record<string, any>;
+  returnValues?: Record<string, unknown>;
   executionTime: number;
   variables: Record<string, string>; // variable name -> type
   error?: string;
@@ -135,8 +135,8 @@ export interface ScienceDataOutput {
     nullCounts: Record<string, number>;
     memoryUsage: number;
   };
-  preview?: any[][]; // first few rows
-  queryResult?: any;
+  preview?: unknown[][]; // first few rows
+  queryResult?: unknown;
   error?: string;
 }
 
@@ -180,7 +180,7 @@ export interface ScienceModelInput {
   modelVar?: string; // variable name for model
   trainData?: string; // variable name for training data
   targetCol?: string; // target column name
-  params?: Record<string, any>; // model hyperparameters
+  params?: Record<string, unknown>; // model hyperparameters
   predictData?: string; // data for prediction
   metrics?: string[]; // evaluation metrics
   savePath?: string; // path to save/load model
@@ -191,7 +191,7 @@ export interface ScienceModelOutput {
   message: string;
   modelVar?: string;
   metrics?: Record<string, number>;
-  predictions?: any[];
+  predictions?: unknown[];
   featureImportance?: Record<string, number>;
   error?: string;
 }
@@ -247,7 +247,7 @@ export class ScienceError extends Error {
   constructor(
     message: string,
     public code: string,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'ScienceError';
@@ -262,7 +262,7 @@ export class ScienceTimeoutError extends ScienceError {
 }
 
 export class ScienceEnvironmentError extends ScienceError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, 'ENV_ERROR', details);
     this.name = 'ScienceEnvironmentError';
   }
