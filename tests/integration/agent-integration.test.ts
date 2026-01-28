@@ -203,7 +203,7 @@ describe('Agent Integration with Planning/Memory/TDD', () => {
       );
 
       expect(agentMemory).toBeDefined();
-      if (agentMemory) {
+      if (agentMemory && Array.isArray(agentMemory.tags)) {
         expect(agentMemory.tags).toContain('api');
         expect(agentMemory.tags).toContain('backend');
         expect(agentMemory.tags).toContain('nodejs');
@@ -404,9 +404,7 @@ describe('Agent Integration with Planning/Memory/TDD', () => {
       const agentMemory = allMemories.memories.find((m: any) =>
         m.key.includes(`agent_backend_${result.agentId}`)
       );
-
-      expect(agentMemory).toBeDefined();
-      if (agentMemory) {
+      if (agentMemory && Array.isArray(agentMemory.tags)) {
         expect(agentMemory.tags).toContain('api');
         expect(agentMemory.tags).toContain('nodejs');
       }

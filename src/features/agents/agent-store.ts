@@ -104,6 +104,18 @@ export class AgentStore {
   }
 
   /**
+   * Check if database connection is open
+   */
+  private isOpen(): boolean {
+    try {
+      return this.db.open;
+    } catch {
+      return false;
+    }
+  }
+
+
+  /**
    * Create a new agent
    */
   create(
@@ -172,6 +184,11 @@ export class AgentStore {
    * Update agent status
    */
   updateStatus(id: string, status: AgentStatus, data?: { result?: unknown; error?: string; progress?: string }): void {
+    // Silently return if database is closed (during cleanup)
+    if (!this.isOpen()) {
+      return;
+    }
+
     const updates: string[] = ['status = ?'];
     const params: SqlParam[] = [status];
 

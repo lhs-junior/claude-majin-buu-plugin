@@ -52,6 +52,16 @@ export interface MetadataStoreOptions {
   verbose?: boolean;
 }
 
+/**
+ * Current schema version for migration tracking.
+ * Increment this when adding new indexes or schema changes.
+ *
+ * Version History:
+ * - v1: Initial schema with basic indexes
+ * - v2: Added performance indexes (tool_name, composite indexes, added_at)
+ */
+const SCHEMA_VERSION = 2;
+
 export class MetadataStore {
   private db: Database.Database;
   private readonly filepath: string;
@@ -71,12 +81,21 @@ export class MetadataStore {
     this.db = new Database(this.filepath, dbOptions);
 
     this.initializeSchema();
+    this.runMigrations();
   }
 
   /**
    * Initialize database schema
    */
   private initializeSchema(): void {
+    // Schema version tracking table
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS schema_version (
+        version INTEGER PRIMARY KEY,
+        applied_at INTEGER NOT NULL
+      )
+    `);
+
     // Plugins table
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS plugins (
@@ -122,12 +141,131 @@ export class MetadataStore {
     `);
 
     // Create indexes for performance
+    // These are idempotent (IF NOT EXISTS) so safe to run on every startup
+    this.createIndexes();
+  }
+
+  /**
+   * Create database indexes for query optimization.
+   *
+   * Performance Impact Analysis:
+   * - idx_tools_server_id: Used in disconnectServer(), getToolsByServer()
+   *   Without index: O(n) full table scan
+   *   With index: O(log n) B-tree lookup
+   *   Expected improvement: ~10-50x for 500+ tools
+   *
+   * - idx_tools_category: Used in category-based filtering
+   *   Expected improvement: ~5-20x for category queries
+   *
+   * - idx_tools_added_at: Used in time-based range queries
+   *   Expected improvement: ~10-30x for date range filters
+   *
+   * - idx_tools_name_search: Covering index for name lookups with server_id
+   *   Expected improvement: ~2-5x for filtered searches
+   *
+   * - idx_usage_logs_timestamp: Used in clearOldUsageLogs(), time-based queries
+   *   Without index: O(n) scan of potentially millions of logs
+   *   With index: O(log n) + O(k) where k = matching rows
+   *   Expected improvement: ~50-100x for large log tables
+   *
+   * - idx_usage_logs_tool_name: Used in getUsageLogs() with toolName filter
+   *   Expected improvement: ~20-50x for tool-specific log queries
+   *
+   * - idx_usage_logs_composite: Composite index for common query pattern
+   *   Covers: timestamp DESC with tool_name filter
+   *   Expected improvement: ~10-30x for combined queries
+   *
+   * - idx_plugins_quality_usage: Covering index for getAllPlugins() ORDER BY
+   *   Expected improvement: ~5-10x avoids sort operation
+   */
+  private createIndexes(): void {
     this.db.exec(`
+      -- Tools table indexes
       CREATE INDEX IF NOT EXISTS idx_tools_server_id ON tools(server_id);
       CREATE INDEX IF NOT EXISTS idx_tools_category ON tools(category);
+      CREATE INDEX IF NOT EXISTS idx_tools_added_at ON tools(added_at);
+      CREATE INDEX IF NOT EXISTS idx_tools_name_search ON tools(name, server_id);
+
+      -- Usage logs table indexes
       CREATE INDEX IF NOT EXISTS idx_usage_logs_timestamp ON usage_logs(timestamp);
       CREATE INDEX IF NOT EXISTS idx_usage_logs_tool_name ON usage_logs(tool_name);
+      CREATE INDEX IF NOT EXISTS idx_usage_logs_composite ON usage_logs(tool_name, timestamp DESC);
+
+      -- Plugins table indexes (for ORDER BY optimization)
+      CREATE INDEX IF NOT EXISTS idx_plugins_quality_usage ON plugins(quality_score DESC, usage_count DESC);
     `);
+  }
+
+  /**
+   * Run database migrations for existing databases.
+   * This handles schema upgrades when the application is updated.
+   */
+  private runMigrations(): void {
+    const currentVersion = this.getSchemaVersion();
+
+    if (currentVersion >= SCHEMA_VERSION) {
+      return; // Already up to date
+    }
+
+    logger.info(`Running migrations from v${currentVersion} to v${SCHEMA_VERSION}`);
+
+    // Migration v1 -> v2: Add performance indexes
+    if (currentVersion < 2) {
+      this.migrateToV2();
+    }
+
+    // Record the new schema version
+    this.setSchemaVersion(SCHEMA_VERSION);
+  }
+
+  /**
+   * Get current schema version from database
+   */
+  private getSchemaVersion(): number {
+    try {
+      const row = this.db.prepare(
+        'SELECT MAX(version) as version FROM schema_version'
+      ).get() as { version: number | null } | undefined;
+      return row?.version ?? 0;
+    } catch {
+      // Table doesn't exist yet, return 0
+      return 0;
+    }
+  }
+
+  /**
+   * Set schema version in database
+   */
+  private setSchemaVersion(version: number): void {
+    this.db.prepare(
+      'INSERT OR REPLACE INTO schema_version (version, applied_at) VALUES (?, ?)'
+    ).run(version, Date.now());
+  }
+
+  /**
+   * Migration to schema version 2:
+   * - Adds performance indexes for tools and usage_logs tables
+   * - Adds composite indexes for common query patterns
+   *
+   * This migration is safe for existing data - indexes are created
+   * in the background and don't modify existing rows.
+   */
+  private migrateToV2(): void {
+    logger.info('Migrating to schema v2: Adding performance indexes');
+
+    // These indexes may already exist from createIndexes(), but CREATE INDEX IF NOT EXISTS is idempotent
+    this.db.exec(`
+      -- New indexes for v2
+      CREATE INDEX IF NOT EXISTS idx_tools_added_at ON tools(added_at);
+      CREATE INDEX IF NOT EXISTS idx_tools_name_search ON tools(name, server_id);
+      CREATE INDEX IF NOT EXISTS idx_usage_logs_composite ON usage_logs(tool_name, timestamp DESC);
+      CREATE INDEX IF NOT EXISTS idx_plugins_quality_usage ON plugins(quality_score DESC, usage_count DESC);
+    `);
+
+    // Run ANALYZE to update query planner statistics after adding indexes
+    this.db.exec('ANALYZE');
+
+    logger.info('Migration to v2 complete');
   }
 
   // ========== Plugin Operations ==========

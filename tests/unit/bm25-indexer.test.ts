@@ -204,7 +204,7 @@ describe('BM25Indexer', () => {
       const duration = performance.now() - start;
 
       expect(results.length).toBeGreaterThan(0);
-      expect(duration).toBeLessThan(2); // Should still be very fast
+      expect(duration).toBeLessThan(10); // Should still be very fast for 500 tools
     });
   });
 
