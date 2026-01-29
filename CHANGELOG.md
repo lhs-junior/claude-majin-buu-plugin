@@ -7,11 +7,135 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note**: This project was renamed from "awesome-plugin" to "FLUX" as of v2.0.0, reflecting its focus as a smart Claude Code plugin system rather than an MCP gateway.
 
-## [2.0.0] - 2026-01-29 - FLUX Rebrand
+## [2.0.0] - 2026-01-29 - FLUX Fusion System + Documentation Restructure
 
-### 🏗️ Major Architecture Refactoring - Plugin-First Design
+### 🚀 Major Release - Smart Feature Cooperation
 
-This is a **MAJOR VERSION** release with significant architectural improvements. The codebase has been refactored from MCP-centric to a clean plugin-first architecture with proper separation of concerns.
+This is a **MAJOR VERSION** release introducing the revolutionary Fusion System for intelligent feature cooperation, complete documentation restructure into 3-tier architecture, and significant absorption rate improvements (30% → 61%).
+
+### 🔗 Fusion System - Smart Feature Cooperation (NEW)
+
+**Key Concept**: Fusion = 똑똑한 협력 (Smart Cooperation)
+- NOT parallel execution (which increases token usage)
+- Automatic coordination via lifecycle hooks
+- Token savings through intelligent state sharing
+- Exponential synergy through feature combinations
+
+#### Fusion Implementations (4 new systems)
+
+**1. Lifecycle Hooks Fusion (Level 4)**
+- 19 hook types for event-based coordination
+- 5 built-in automatic integrations:
+  - `PostToolUse` → Memory auto-save
+  - `AgentCompleted` → Planning auto-update
+  - `TestCompleted` → TDD verification
+  - `ContextFull` → Memory compression
+  - `SessionStart` → State recovery
+- **Result**: All features automatically cooperate without manual intervention
+- **Files**: `src/fusion/implementations/lifecycle-hooks-fusion.ts` (452 lines, 33 tests)
+
+**2. Context Recovery Fusion (Level 4)**
+- Seamless session state persistence across `/clear` cycles
+- Captures state from Memory, Planning, Agents, TDD, Science
+- Auto-restore on `SessionStart`
+- **Result**: Infinite context capability
+- **Files**: `src/fusion/implementations/context-recovery-fusion.ts` (17KB, 23 tests)
+
+**3. Workflow Fusion (Level 3)**
+- Sequential automatic coordination (NOT parallel)
+- Hook-based flow: Planning → Agent → TDD → Memory
+- Smart cooperation between phases
+- **Result**: 75% token savings (400 → 100 tokens)
+- **Files**: `src/fusion/implementations/workflow-fusion.ts` (426 lines, 22 tests)
+
+**4. Dashboard Fusion (Level 3)**
+- Unified status aggregation across all features
+- Real-time monitoring with ASCII/compact/JSON formats
+- Single source of truth
+- **Result**: Instant visibility without querying each feature
+- **Files**: `src/fusion/implementations/dashboard-fusion.ts` (467 lines, 25 tests)
+
+**Fusion Evaluation System**
+- Matrix-based scoring (0-80 points)
+- 4 dimensions: Synergy, Automation, Performance, User Value
+- Extended quality scoring to 120 points (100 base + 20 Fusion)
+- **Files**: `src/fusion/fusion-evaluator.ts` (614 lines)
+
+### 📚 Documentation Restructure - 3-Tier Architecture (NEW)
+
+Complete documentation reorganization for clarity and targeted audiences:
+
+**New Structure**:
+```
+docs/
+├── user/           [For End Users - 일반 사용자용]
+│   ├── getting-started.md
+│   ├── features/       (7 guides)
+│   ├── scenarios/      (3 real-world examples)
+│   └── troubleshooting.md
+│
+├── developer/      [For Contributors - 개발자용]
+│   ├── architecture/   (System design)
+│   ├── api/           (6 API references)
+│   ├── absorption/    (Quality evaluation, Fusion)
+│   └── guides/        (Contributing, adding features)
+│
+└── ai/             [For AI Consumption - AI용]
+    ├── skills/         (7 skill definitions)
+    ├── absorption-internals/
+    └── feature-analysis/
+```
+
+**Key Improvements**:
+- README.md reduced: 386 → 92 lines (76% reduction)
+- Clear navigation for each audience
+- 20 new documentation files
+- All internal links updated and verified
+
+### 🧬 Absorption Rate Improvements (NEW)
+
+**Baseline → Current**: 30% → 61% (+31 percentage points)
+
+**Newly Absorbed Features** (4 high-value additions):
+
+**1. Findings Manager** (from claude-engineer)
+- Track decisions, discoveries, blockers, research, questions
+- Markdown export with category filtering
+- 49 tests passing
+- **Files**: `src/features/planning/findings-manager.ts` (359 lines)
+- **Absorption Score**: 89/120 (+16 from Fusion potential)
+
+**2. Progress Manager** (from claude-engineer)
+- Auto-log session activities via hooks
+- Duration tracking and session management
+- Activity timeline with context
+- 32 tests passing
+- **Files**: `src/features/planning/progress-manager.ts` (497 lines)
+- **Absorption Score**: 87/120 (+15 from Fusion potential)
+
+**3. Memory Auto-Categorization** (from cursor-boost)
+- 7 categories: decision, bugfix, feature, discovery, learning, config, idea
+- 40+ tech terms for intelligent tag extraction
+- Automatic classification on save
+- 43 tests passing (enhanced from existing 29)
+- **Absorption Score**: 82/120 (+12 from Fusion potential)
+
+**4. Worktree Manager** (from claude-engineer)
+- Isolated branch management in `.worktrees/`
+- 5 MCP tools: create, list, switch, remove, cleanup
+- Prevent branch pollution in main repo
+- 51 tests passing
+- **Files**: `src/features/git/worktree-manager.ts` (432 lines)
+- **Absorption Score**: 78/120 (+11 from Fusion potential)
+
+**Updated Project Scores**:
+- claude-engineer: 35% → 67% (+32%)
+- aider: 40% → 58% (+18%)
+- cursor-boost: 25% → 54% (+29%)
+
+### 🏗️ Architecture Refactoring - Plugin-First Design
+
+This release also includes significant architectural improvements. The codebase has been refactored from MCP-centric to a clean plugin-first architecture with proper separation of concerns.
 
 ### Breaking Changes
 

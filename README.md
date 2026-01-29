@@ -35,9 +35,27 @@ Unlike stateless prompt-based systems, FLUX uses persistent state management to 
 
 ## Installation
 
+### Method 1: Plugin Marketplace (Recommended)
+
+```bash
+/plugin marketplace add lhs-junior/flux
+/plugin install flux@flux
+```
+
+### Method 2: npm
+
 ```bash
 npm install -g flux
-flux install-skills
+```
+
+### Method 3: From Source
+
+```bash
+git clone https://github.com/lhs-junior/flux.git
+cd flux
+npm install
+npm run build
+npm link
 ```
 
 ## Quick Start

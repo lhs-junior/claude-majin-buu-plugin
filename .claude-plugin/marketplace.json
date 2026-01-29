@@ -1,0 +1,51 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "flux",
+  "description": "FLUX: Smart Claude Code plugin with Fusion System for intelligent feature cooperation. Includes Memory, Planning, Agents, TDD, Science, and Guide systems with 93% token reduction via on-demand loading.",
+  "owner": {
+    "name": "Hyunsoo Lee",
+    "email": "da48688@naver.com"
+  },
+  "metadata": {
+    "version": "2.0.0",
+    "description": "The Absorption Engine - Continuously absorbing and improving the best Claude Code projects"
+  },
+  "plugins": [
+    {
+      "name": "flux",
+      "source": "./",
+      "description": "Complete FLUX plugin with Memory, Planning, Agents, TDD, Science, Guide systems and Fusion for smart feature cooperation",
+      "version": "2.0.0",
+      "author": {
+        "name": "Hyunsoo Lee",
+        "email": "da48688@naver.com"
+      },
+      "homepage": "https://github.com/lhs-junior/flux",
+      "repository": "https://github.com/lhs-junior/flux",
+      "license": "MIT",
+      "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "claude",
+        "ai",
+        "tools",
+        "plugin",
+        "fusion",
+        "memory",
+        "planning",
+        "agents",
+        "tdd",
+        "science",
+        "absorption"
+      ],
+      "category": "productivity",
+      "strict": false,
+      "mcpServers": {
+        "flux": {
+          "command": "node",
+          "args": ["${CLAUDE_PLUGIN_ROOT}/dist/cli.mjs", "start"]
+        }
+      }
+    }
+  ]
+}

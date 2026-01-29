@@ -1,0 +1,37 @@
+{
+  "name": "flux",
+  "version": "2.0.0",
+  "description": "FLUX: Smart Claude Code plugin with Fusion System for intelligent feature cooperation. Includes Memory, Planning, Agents, TDD, Science, and Guide systems with 93% token reduction via on-demand loading.",
+  "author": {
+    "name": "Hyunsoo Lee",
+    "email": "da48688@naver.com"
+  },
+  "homepage": "https://github.com/lhs-junior/flux",
+  "repository": "https://github.com/lhs-junior/flux",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "ai",
+    "tools",
+    "plugin",
+    "fusion",
+    "memory",
+    "planning",
+    "agents",
+    "tdd",
+    "science",
+    "absorption"
+  ],
+  "category": "productivity",
+  "mcpServers": {
+    "flux": {
+      "command": "node",
+      "args": ["dist/cli.mjs", "start"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
