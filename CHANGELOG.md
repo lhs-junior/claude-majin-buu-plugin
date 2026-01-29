@@ -5,13 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-> **Note**: This project was renamed from "awesome-plugin" to "FLUX" as of v2.0.0, reflecting its focus as a smart Claude Code plugin system rather than an MCP gateway.
+> **Note**: This project was renamed from "awesome-plugin" to "FLUX" in v2.0.0, then to "Claude Majin Buu Plugin" - reflecting its philosophy of absorbing the best features from top Claude Code projects and evolving stronger, just like Majin Buu from Dragon Ball Z.
 
-## [2.0.0] - 2026-01-29 - FLUX Fusion System + Documentation Restructure
+## [2.0.0] - 2026-01-29 - Claude Majin Buu Plugin: Absorb, Fuse, Evolve
 
-### 🚀 Major Release - Smart Feature Cooperation
+### 🧬 Major Release - The Majin Buu Philosophy
 
-This is a **MAJOR VERSION** release introducing the revolutionary Fusion System for intelligent feature cooperation, complete documentation restructure into 3-tier architecture, and significant absorption rate improvements (30% → 61%).
+This is a **MAJOR VERSION** release introducing the Majin Buu concept: like the Dragon Ball Z character, this plugin **absorbs the best features from top Claude Code projects** and evolves stronger through intelligent Fusion. Complete documentation restructure into 3-tier architecture, and absorption rate improvements from 30% to 61%.
 
 ### 🔗 Fusion System - Smart Feature Cooperation (NEW)
 

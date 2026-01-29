@@ -1,11 +1,11 @@
 {
-  "name": "flux",
+  "name": "claude-majin-buu-plugin",
   "version": "2.0.0",
-  "description": "FLUX: Smart Claude Code plugin with 93% token reduction via intelligent on-demand loading",
+  "description": "Like Majin Buu from Dragon Ball Z - absorbs the best Claude Code projects and evolves stronger with each fusion. 93% token reduction via intelligent on-demand loading.",
   "main": "dist/index.mjs",
   "types": "dist/index.d.mts",
   "bin": {
-    "flux": "./dist/cli.mjs"
+    "claude-majin-buu": "./dist/cli.mjs"
   },
   "scripts": {
     "build": "tsup",
@@ -17,15 +17,19 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": [
-    "mcp",
-    "model-context-protocol",
     "claude",
+    "claude-code",
+    "plugin",
+    "absorption",
+    "fusion",
+    "majin-buu",
+    "evolution",
     "ai",
     "tools",
-    "plugin",
-    "gateway",
-    "bm25",
-    "search"
+    "memory",
+    "planning",
+    "agents",
+    "tdd"
   ],
   "author": "hyunsoo Lee <da48688@naver.com>",
   "license": "MIT",
@@ -55,9 +59,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lhs-junior/flux.git"
+    "url": "https://github.com/lhs-junior/claude-majin-buu-plugin.git"
   },
   "bugs": {
-    "url": "https://github.com/lhs-junior/flux/issues"
+    "url": "https://github.com/lhs-junior/claude-majin-buu-plugin/issues"
   }
 }

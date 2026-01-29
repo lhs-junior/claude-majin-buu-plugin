@@ -1,47 +1,45 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "flux",
-  "description": "FLUX: Smart Claude Code plugin with Fusion System for intelligent feature cooperation. Includes Memory, Planning, Agents, TDD, Science, and Guide systems with 93% token reduction via on-demand loading.",
+  "name": "claude-majin-buu-plugin",
+  "description": "Like Majin Buu from Dragon Ball Z - absorbs the best Claude Code projects and evolves stronger with each fusion. Features Memory, Planning, Agents, TDD, Science systems with 93% token reduction.",
   "owner": {
     "name": "Hyunsoo Lee",
     "email": "da48688@naver.com"
   },
   "metadata": {
     "version": "2.0.0",
-    "description": "The Absorption Engine - Continuously absorbing and improving the best Claude Code projects"
+    "description": "The Absorption Evolution Plugin - Absorb, Fuse, Evolve!"
   },
   "plugins": [
     {
-      "name": "flux",
+      "name": "claude-majin-buu",
       "source": "./",
-      "description": "Complete FLUX plugin with Memory, Planning, Agents, TDD, Science, Guide systems and Fusion for smart feature cooperation",
+      "description": "🧬 Like Majin Buu - absorbs best features and evolves! Memory, Planning, Agents, TDD, Science with smart Fusion cooperation",
       "version": "2.0.0",
       "author": {
         "name": "Hyunsoo Lee",
         "email": "da48688@naver.com"
       },
-      "homepage": "https://github.com/lhs-junior/flux",
-      "repository": "https://github.com/lhs-junior/flux",
+      "homepage": "https://github.com/lhs-junior/claude-majin-buu-plugin",
+      "repository": "https://github.com/lhs-junior/claude-majin-buu-plugin",
       "license": "MIT",
       "keywords": [
-        "mcp",
-        "model-context-protocol",
         "claude",
-        "ai",
-        "tools",
         "plugin",
+        "majin-buu",
+        "absorption",
         "fusion",
+        "evolution",
         "memory",
         "planning",
         "agents",
         "tdd",
-        "science",
-        "absorption"
+        "science"
       ],
       "category": "productivity",
       "strict": false,
       "mcpServers": {
-        "flux": {
+        "claude-majin-buu": {
           "command": "node",
           "args": ["${CLAUDE_PLUGIN_ROOT}/dist/cli.mjs", "start"]
         }

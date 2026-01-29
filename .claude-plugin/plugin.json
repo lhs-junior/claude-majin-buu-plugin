@@ -1,32 +1,30 @@
 {
-  "name": "flux",
+  "name": "claude-majin-buu",
   "version": "2.0.0",
-  "description": "FLUX: Smart Claude Code plugin with Fusion System for intelligent feature cooperation. Includes Memory, Planning, Agents, TDD, Science, and Guide systems with 93% token reduction via on-demand loading.",
+  "description": "🧬 Like Majin Buu from Dragon Ball Z - absorbs the best Claude Code projects and evolves stronger with each fusion. Memory, Planning, Agents, TDD, Science with 93% token reduction.",
   "author": {
     "name": "Hyunsoo Lee",
     "email": "da48688@naver.com"
   },
-  "homepage": "https://github.com/lhs-junior/flux",
-  "repository": "https://github.com/lhs-junior/flux",
+  "homepage": "https://github.com/lhs-junior/claude-majin-buu-plugin",
+  "repository": "https://github.com/lhs-junior/claude-majin-buu-plugin",
   "license": "MIT",
   "keywords": [
-    "mcp",
-    "model-context-protocol",
     "claude",
-    "ai",
-    "tools",
     "plugin",
+    "majin-buu",
+    "absorption",
     "fusion",
+    "evolution",
     "memory",
     "planning",
     "agents",
     "tdd",
-    "science",
-    "absorption"
+    "science"
   ],
   "category": "productivity",
   "mcpServers": {
-    "flux": {
+    "claude-majin-buu": {
       "command": "node",
       "args": ["dist/cli.mjs", "start"],
       "env": {
