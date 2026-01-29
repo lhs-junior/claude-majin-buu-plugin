@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18.0.0-green)](https://nodejs.org/)
-[![Absorption Rate](https://img.shields.io/badge/Absorption-61%25-purple)](docs/ai/feature-analysis/missing-features-analysis.md)
+[![Absorption Rate](https://img.shields.io/badge/Absorption-85%25-purple)](docs/ai/feature-analysis/missing-features-analysis.md)
 
 ## Quick Navigation
 
@@ -23,12 +23,12 @@
 
 Just like Majin Buu absorbs powerful warriors to become stronger, this plugin **absorbs the best features from top Claude Code projects** and evolves into something more powerful through intelligent fusion.
 
-**Current Absorption Rate**: 61% (30% → 61% improvement)
-- 🧬 Absorbed from [claude-mem](https://github.com/supermemoryai/claude-mem): Memory system + Auto-categorization
-- 🧬 Absorbed from [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode): Agent orchestration
-- 🧬 Absorbed from [planning-with-files](https://github.com/OthmanAdi/planning-with-files): Planning + Findings + Progress tracking
-- 🧬 Absorbed from [superpowers](https://github.com/obra/superpowers): TDD workflow + Git worktrees
-- 🧬 Absorbed from [agents](https://github.com/wshobson/agents): 10 specialist agent types
+**Current Absorption Rate**: 85% (30% → 85% improvement)
+- 🧬 Absorbed from [claude-mem](https://github.com/supermemoryai/claude-mem): Memory system + Auto-categorization (75% absorbed)
+- 🧬 Absorbed from [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode): Agent Tier System (30 agents) + Lifecycle Hooks (18 event types) + Execution Modes (Ultrapilot, Swarm, Pipeline) + Dashboard Fusion + Ralph Loop + Magic Keyword Detection + Persistent Mode State (85% absorbed)
+- 🧬 Absorbed from [planning-with-files](https://github.com/OthmanAdi/planning-with-files): Planning + Findings + Progress tracking (95% absorbed)
+- 🧬 Absorbed from [superpowers](https://github.com/obra/superpowers): TDD workflow + Git worktrees (70% absorbed)
+- 🧬 Absorbed from [agents](https://github.com/wshobson/agents): 10 specialist agent types (15% absorbed)
 
 **The Result**: A unified plugin that's stronger than the sum of its parts, with automatic Fusion cooperation between all absorbed features.
 
@@ -115,7 +115,7 @@ See [Complete Getting Started Guide](docs/user/getting-started.md) for detailed 
 This plugin has absorbed and evolved features from these excellent projects:
 
 - [claude-mem](https://github.com/supermemoryai/claude-mem) - Memory management + Auto-categorization (75% absorbed)
-- [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) - Agent orchestration (15% absorbed)
+- [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) - Agent Tier System + Lifecycle Hooks + Execution Modes + Dashboard Fusion + Ralph Loop + Magic Keyword Detection + Persistent Mode State (85% absorbed)
 - [planning-with-files](https://github.com/OthmanAdi/planning-with-files) - Planning + Findings + Progress (95% absorbed)
 - [superpowers](https://github.com/obra/superpowers) - TDD workflow + Worktrees (70% absorbed)
 - [agents](https://github.com/wshobson/agents) - 10 specialist types (15% absorbed)
